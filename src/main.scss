@@ -1,0 +1,167 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Italianno&display=swap');
+@import "./mixins";
+
+* {
+  box-sizing: border-box;
+  font-family: var(--primaryFont);
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  // FONTS
+  --primaryFont: "Inter", sans-serif;
+  --secondaryFont: "Noto Sans", sans-serif;
+  --poppinsFont: "Poppins", sans-serif;
+  --signatureFont: "Italianno", cursive;
+  margin-inline: auto;
+  max-width: 1440px;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  min-height: 100vh;
+  background-color: var(--grey-background);
+
+  /* Colors */
+  --background: #ffffff;
+  --grey-background: #f5f7fa;
+  --primary-text: #1a1a1a;
+  --secondary-text: #ffffff;
+  --grey-100: #858d9d;
+  --grey-200: #666666;
+  --grey-300: #48505e;
+  --blue: #003b95;
+  --pale-blue: #1366d9;
+  --red: #ed2034;
+  --info: #edaa00;
+  --info-gradient: linear-gradient(
+      0deg,
+      rgba(255, 183, 0, 0.17),
+      rgba(255, 183, 0, 0.17)
+    ),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+  --success: #01ab31;
+  --success-gradient: linear-gradient(
+      0deg,
+      rgba(1, 171, 49, 0.15),
+      rgba(1, 171, 49, 0.15)
+    ),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+  --danger: #ed2034;
+  --danger-gradient: linear-gradient(
+      0deg,
+      rgba(237, 32, 52, 0.15),
+      rgba(237, 32, 52, 0.15)
+    ),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  background-color: var(--grey-background);
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  hr {
+    margin: 0;
+    padding: 0;
+    transition: 0.3s ease;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+    background-color: transparent;
+  }
+  input {
+    padding-inline: 16px;
+    border: none;
+    outline: none;
+  }
+  select,
+  input {
+    background-color: transparent;
+  }
+  a {
+    text-decoration: none;
+    cursor: pointer;
+  }
+}
+
+.app-container {
+  height: 100%;
+  width: 100%;
+  min-height: 100vh;
+  color: var(--primary-text);
+  background-color: var(--grey-background);
+  position: relative;
+}
+
+.ant-drawer .ant-drawer-content {
+  background: #003b95 !important;
+
+  button {
+    background-color: white;
+  }
+}
+
+.ant-drawer-header {
+  padding: 20px 24px !important;
+}
+
+.ant-drawer-title {
+  img {
+    height: 24%;
+    width: 24%;
+  }
+}
+.ant-drawer-close {
+  position: absolute;
+  right: 10px;
+  color: white !important;
+  background-color: transparent !important;
+
+  .anticon {
+    color: var(--red) !important;
+    svg {
+      height: 25px;
+      width: 25px;
+    }
+  }
+}
+
+::-webkit-scrollbar {
+  width: 0;
+}
+
+.LazyLoad {
+  opacity: 0;
+  transition: all 0.5s ease-in-out;
+}
+
+.is-visible {
+  opacity: 1;
+}
+
+.ant-btn {
+  width: 100% !important;
+  height: 46px !important;
+  margin-top: 10px;
+}
+
+.ant-btn-primary {
+  background-color: #003b95;
+}
+
+.ant-select-single,
+.ant-picker-outlined {
+  height: 46px !important;
+}
