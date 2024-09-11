@@ -1,0 +1,111 @@
+@import "../../../../mixins";
+.allResidentsContainer {
+  padding: 40px;
+
+  .title {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 30px;
+    padding-bottom: 20px;
+  }
+  .actions {
+    @include flex(row, center, center);
+    gap: 20px;
+
+    img {
+      cursor: pointer;
+      height: 24px;
+      width: 24px;
+    }
+  }
+
+  .cardsContainer {
+    color: #002f34;
+    padding-top: 30px;
+    @include flex(row, start, center);
+    flex-wrap: wrap;
+    gap: 20px;
+    .card {
+      border: 1px solid #f0f1f3;
+      border-radius: 6px;
+      padding: 30px;
+      width: 100%;
+      .cardTitle {
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 26px;
+        padding-bottom: 30px;
+      }
+
+      .detail {
+        @include flex(row, space-between, center);
+        padding-bottom: 10px;
+
+        h5 {
+          font-size: 16px;
+          font-weight: 600;
+          line-height: 26px;
+        }
+
+        p {
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 21px;
+        }
+      }
+    }
+  }
+
+  .paymentDetails {
+    margin-top: 20px;
+
+    h3 {
+      padding-bottom: 20px;
+    }
+  }
+
+  .red {
+    padding: 10px 32px;
+    border-radius: 74px;
+    background: linear-gradient(
+        0deg,
+        rgba(237, 32, 52, 0.15),
+        rgba(237, 32, 52, 0.15)
+      ),
+      linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    border: 1px solid #ed2034;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 20px;
+    color: #ed2034;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .allResidentsContainer {
+    .cardsContainer {
+      padding-top: 20px;
+
+      .card {
+        padding: 20px;
+        width: 100%;
+        height: auto;
+        .cardTitle {
+          font-size: 18px;
+          padding-bottom: 20px;
+        }
+
+        .detail {
+          h5 {
+            font-size: 14px;
+            line-height: 20px;
+          }
+
+          p {
+            line-height: 20px;
+          }
+        }
+      }
+    }
+  }
+}
