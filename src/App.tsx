@@ -19,7 +19,7 @@ function App() {
         setAuthUser(user);
         if (
           (location.pathname === "/login" ||
-            location.pathname !== "/register") &&
+            location.pathname === "/register") &&
           !!user
         ) {
           navigate("/");
