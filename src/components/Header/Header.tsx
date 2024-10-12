@@ -1,5 +1,4 @@
 import { avatar } from "../../assets";
-import { adminDetails } from "../../content";
 import { MenuOutlined } from "@ant-design/icons"; // Import the Menu icon
 import { useState } from "react";
 import { Drawer, Modal } from "antd";
@@ -8,8 +7,9 @@ import styles from "./Header.module.scss";
 import { home, logo, logoutIcon, profileIcon, wardensIcon } from "../../assets";
 import { ReactSVG } from "react-svg";
 import { signOutUser } from "../../services/firebase";
+import { User } from "firebase/auth";
 
-const Header = () => {
+const Header = (user: User) => {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -21,8 +21,12 @@ const Header = () => {
     try {
       await signOutUser();
       setIsModalVisible(false);
-    } catch (error) {
-      console.error("Error signing out:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error signing out:", error.message);
+      } else {
+        console.error("An unexpected error occurred:", error);
+      }
     }
   };
 
@@ -74,8 +78,8 @@ const Header = () => {
         <MenuOutlined className={styles.menuIcon} onClick={toggleDrawer} />
         <div className={styles.leftSide}></div>
         <div className={styles.profile}>
-          <img src={avatar} alt="Admin Avatar" />
-          <h6>{adminDetails.fullName}</h6>
+          <img src={user.photoURL ?? avatar} alt="Admin Avatar" />
+          <h6>{user.displayName}</h6>
         </div>
       </div>
 

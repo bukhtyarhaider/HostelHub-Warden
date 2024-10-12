@@ -17,8 +17,12 @@ const Sidebar = () => {
     try {
       await signOutUser();
       setIsModalVisible(false);
-    } catch (error) {
-      console.error("Error signing out:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error signing out:", error.message);
+      } else {
+        console.error("An unexpected error occurred:", error);
+      }
     }
   };
 
