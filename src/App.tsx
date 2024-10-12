@@ -1,20 +1,49 @@
 import Sidebar from "./components/Sidebar/Sidebar";
 import "./main.scss";
-import { Route, Routes } from "react-router-dom";
-import PrivateRoute from './components/PrivateRoute';
-import routes from './routes';
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import PrivateRoute from "./components/PrivateRoute";
+import routes from "./routes";
 import Header from "./components/Header/Header";
+import { User } from "firebase/auth";
+import { useEffect, useState } from "react";
+import { observeAuthState } from "./services/firebase";
 
 function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [authUser, setAuthUser] = useState<User | null>();
+
+  useEffect(() => {
+    const unsubscribe = observeAuthState((user) => {
+      if (user) {
+        setAuthUser(user);
+        if (
+          (location.pathname === "/login" ||
+            location.pathname !== "/register") &&
+          !!user
+        ) {
+          navigate("/");
+        }
+      } else {
+        setAuthUser(null);
+        if (
+          location.pathname !== "/login" &&
+          location.pathname !== "/register"
+        ) {
+          navigate("/login");
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [location.pathname, navigate]);
+
   return (
     <div className="app-container">
-      {location.pathname !== "/login" && location.pathname !== "/register" && (
-        <Sidebar />
-      )}
+      {authUser && <Sidebar />}
 
       <div className="main-content">
-        {location.pathname !== "/login" &&
-          location.pathname !== "/register" && <Header />}
+        {authUser && <Header />}
         <Routes>
           {routes.map((route) => (
             <Route
@@ -24,7 +53,10 @@ function App() {
                 route.path === "/login" || route.path === "/register" ? (
                   <route.element />
                 ) : (
-                  <PrivateRoute element={route.element} />
+                  <PrivateRoute
+                    isAuthenticated={!!authUser}
+                    element={route.element}
+                  />
                 )
               }
             />
@@ -33,6 +65,7 @@ function App() {
             path="*"
             element={
               <PrivateRoute
+                isAuthenticated={!!authUser}
                 element={routes.find((route) => route.path === "/")?.element}
               />
             }
