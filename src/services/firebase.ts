@@ -7,8 +7,10 @@ import {
   onAuthStateChanged,
   User,
   signInWithEmailAndPassword,
+  updatePassword,
+  updateProfile,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { FormData } from "../types/types";
 
@@ -111,4 +113,94 @@ export const signOutUser = async () => {
 
 export const getCurrentAuth = () => {
   return auth;
+};
+
+export const updateUserProfile = async (
+  displayName: string,
+  phoneNumber: string,
+  address: string,
+  state: string,
+  profileImageUrl: string
+) => {
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      // Update the authentication profile
+      await updateProfile(user, { displayName, photoURL: profileImageUrl });
+
+      // Update additional information in Firestore
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          contactNumber: phoneNumber,
+          currentAddress: address,
+          currentState: state,
+          profilePhotoURL: profileImageUrl,
+        },
+        { merge: true }
+      );
+
+      return "User profile updated successfully.";
+    } else {
+      throw new Error("No user is currently signed in.");
+    }
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+};
+
+export const updateProfilePassword = async (newPassword: string) => {
+  const user = auth.currentUser;
+  if (user) {
+    try {
+      await updatePassword(user, newPassword);
+    } catch (error: any) {
+      if (error.code === "auth/requires-recent-login") {
+        throw new Error("Please re-authenticate to update your password.");
+      } else {
+        throw new Error(error.message);
+      }
+    }
+  } else {
+    throw new Error("No user is currently signed in.");
+  }
+};
+
+export const getUserProfile = async () => {
+  const user = auth.currentUser;
+  if (user) {
+    const userDocRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        ...userData,
+      };
+    } else {
+      throw new Error("User data not found.");
+    }
+  } else {
+    throw new Error("No user is currently signed in.");
+  }
+};
+
+export const uploadProfileImage = async (file: File, userEmail: string) => {
+  try {
+    const imageRef = ref(storage, `profilePictures/${userEmail}`);
+    const snapshot = await uploadBytes(imageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    return downloadURL;
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error("Failed to upload profile image: " + error.message);
+    } else {
+      throw new Error(
+        "Failed to upload profile image: An unexpected error occurred"
+      );
+    }
+  }
 };

@@ -5,6 +5,7 @@ import ChangePassword from "./ChangePassword/ChangePassword";
 import { useState, useEffect } from "react";
 import { getUserProfile } from "../../services/firebase";
 import { UserData, UserProfile } from "./MyProfileProps";
+import { Loader } from "../../components/Loader/Loader";
 
 const MyProfile = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -33,7 +34,7 @@ const MyProfile = () => {
         ) : userData && "error" in userData ? (
           <p>{userData.error}</p>
         ) : (
-          <p>Loading...</p>
+          <Loader />
         ),
     },
     {

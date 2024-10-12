@@ -1,52 +1,66 @@
 import React, { useState } from "react";
 import styles from "./ChangePassword.module.scss";
 import CustomInput from "../../../components/CustomInput/CustomInput";
+import { updateProfilePassword } from "../../../services/firebase";
+import { Loader } from "../../../components/Loader/Loader";
 
-const ChangePassword = ({ userData, setUserData }) => {
+const ChangePassword = () => {
   const [errors, setErrors] = useState<any>({});
+  const [isDisabled, setIsDisabled] = useState<boolean>(false);
+  const [formData, setFormData] = useState<any>({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    // Remove error for the specific field being changed
-    setErrors((prevErrors) => ({
+    setErrors((prevErrors: any) => ({
       ...prevErrors,
       [name]: "",
     }));
 
-    setUserData({ ...userData, [name]: value });
+    setFormData({ ...formData, [name]: value });
   };
 
   const validate = () => {
     const newErrors: any = {};
 
-    if (!userData.currentPassword) {
+    if (!formData.currentPassword) {
       newErrors.currentPassword = "Current password is required";
     }
 
-    if (!userData.newPassword) {
+    if (!formData.newPassword) {
       newErrors.newPassword = "New password is required";
-    } else if (userData.newPassword.length < 8) {
+    } else if (formData.newPassword.length < 8) {
       newErrors.newPassword = "Password must be at least 8 characters long";
     }
 
-    if (!userData.confirmPassword) {
+    if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your new password";
-    } else if (userData.confirmPassword !== userData.newPassword) {
+    } else if (formData.confirmPassword !== formData.newPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
     } else {
-      // Handle successful form submission here
-      console.log("Form submitted successfully", userData);
+      try {
+        setIsDisabled(true);
+        await updateProfilePassword(formData.newPassword).catch();
+        setIsDisabled(false);
+      } catch (error: any) {
+        setIsDisabled(false);
+        setErrors({ firebaseError: error.message, ...errors });
+        throw new Error(error.message);
+      }
     }
   };
 
@@ -64,7 +78,7 @@ const ChangePassword = ({ userData, setUserData }) => {
               type="text"
               name="currentPassword"
               placeholder="Enter current password"
-              value={userData.currentPassword}
+              value={formData.currentPassword}
               onChange={handleChange}
             />
             {errors.currentPassword && (
@@ -80,7 +94,7 @@ const ChangePassword = ({ userData, setUserData }) => {
               type="password"
               name="newPassword"
               placeholder="Enter new password"
-              value={userData.newPassword}
+              value={formData.newPassword}
               onChange={handleChange}
             />
             {errors.newPassword && (
@@ -96,24 +110,31 @@ const ChangePassword = ({ userData, setUserData }) => {
               type="password"
               name="confirmPassword"
               placeholder="Confirm new password"
-              value={userData.confirmPassword}
+              value={formData.confirmPassword}
               onChange={handleChange}
             />
-            {errors.confirmPassword && (
-              <div className="error">{errors.confirmPassword}</div>
-            )}
+            {errors.confirmPassword ||
+              (errors.firebaseError && (
+                <div className="error">
+                  {errors.firebaseError
+                    ? errors.firebaseError
+                    : errors.confirmPassword}
+                </div>
+              ))}
           </div>
         </div>
 
         <div className={styles.buttonContainer}>
-          <button type="button" className={styles.backButton}>
-            Back
-          </button>
-          <button type="submit" className={styles.saveButton}>
+          <button
+            disabled={isDisabled}
+            type="submit"
+            className={styles.saveButton}
+          >
             Save Changes
           </button>
         </div>
       </form>
+      {<Loader hide={!isDisabled} />}
     </div>
   );
 };
