@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Documents from "./Documents/Documents";
 
 import { successIcon } from "../../../assets";
-import { signUp } from "../../services/firebase";
+import { signUp } from "../../../services/firebase";
 import { FormData } from "../../../types/types";
 import { Loader } from "../../../components/Loader/Loader";
 
