@@ -10,6 +10,7 @@ import { signOutUser } from "../../services/firebase";
 import { User } from "firebase/auth";
 
 const Header = (user: User) => {
+  const userInfo = user.user;
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -78,8 +79,8 @@ const Header = (user: User) => {
         <MenuOutlined className={styles.menuIcon} onClick={toggleDrawer} />
         <div className={styles.leftSide}></div>
         <div className={styles.profile}>
-          <img src={user.photoURL ?? avatar} alt="Admin Avatar" />
-          <h6>{user.displayName}</h6>
+          <img src={userInfo.photoURL ?? avatar} alt="Admin Avatar" />
+          <h6>{userInfo.displayName}</h6>
         </div>
       </div>
 

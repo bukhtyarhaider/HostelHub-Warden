@@ -43,7 +43,7 @@ function App() {
       {authUser && <Sidebar />}
 
       <div className="main-content">
-        {authUser && <Header />}
+        {authUser && <Header user={authUser} />}
         <Routes>
           {routes.map((route) => (
             <Route
