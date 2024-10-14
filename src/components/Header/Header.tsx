@@ -7,10 +7,10 @@ import styles from "./Header.module.scss";
 import { home, logo, logoutIcon, profileIcon, wardensIcon } from "../../assets";
 import { ReactSVG } from "react-svg";
 import { signOutUser } from "../../services/firebase";
-import { User } from "firebase/auth";
+import { HeaderProps } from "./HeaderProps";
 
-const Header = (user: User) => {
-  const userInfo = user.user;
+const Header: React.FC<HeaderProps> = ({ user }) => {
+  const userInfo = user;
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
