@@ -32,7 +32,6 @@ const HostelDetails: React.FC<HostelDetailsProps> = ({
       <h3 className={styles.heading}>Hostel Information</h3>
 
       <form className={styles.form}>
-        {/* Hostel Name */}
         <div className={styles.inputContainer}>
           <label>Hostel Name</label>
           <div className={styles.input}>

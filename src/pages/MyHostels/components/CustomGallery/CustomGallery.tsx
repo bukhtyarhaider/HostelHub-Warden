@@ -9,7 +9,9 @@ const CustomGallery: React.FC<CustomGalleryProps> = ({
   images,
   location,
 }) => {
-  const [galleryImages, setGalleryImages] = useState<string[]>(images);
+  const [galleryImages, setGalleryImages] = useState<string[]>(
+    images.slice(1, 5)
+  );
 
   function moveToZeroIndex(index: number) {
     if (index < 0 || index >= galleryImages.length) {

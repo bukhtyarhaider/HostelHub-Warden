@@ -3,10 +3,12 @@ import CustomGallery from "../CustomGallery/CustomGallery";
 import DetailsTable from "../DetailsTable/DetailsTable";
 import styles from "./AllDetails.module.scss";
 import { getHostelDetails } from "../../../../services/firebase";
-import { Hostel } from "../../../../types/types"; // Ensure Room is imported
+import { Hostel } from "../../../../types/types";
 import { Loader } from "../../../../components/Loader/Loader";
+import { useNavigate } from "react-router-dom";
 
 const AllDetails = () => {
+  const navigate = useNavigate();
   const [hostelData, setHostelData] = useState<Hostel | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -28,6 +30,18 @@ const AllDetails = () => {
 
   return (
     <div className={styles.allDetailsContainer}>
+      <div className={styles.top}>
+        <h2></h2>
+        <button
+          onClick={() => {
+            navigate("/add-hostel", {
+              state: { edit: true, hostelDetails: hostelData },
+            });
+          }}
+        >
+          Edit Hostel
+        </button>
+      </div>
       {hostelData ? (
         <>
           <CustomGallery

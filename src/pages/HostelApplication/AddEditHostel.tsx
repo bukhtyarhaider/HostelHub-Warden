@@ -6,7 +6,7 @@ import CustomButton from "../../components/CustomButton/CustomButton";
 import Documents from "./Documents/Documents";
 import ReviewConfirm from "./ReviewConfirm/ReviewConfirm";
 import RoomsDetails from "./RoomsDetails/RoomsDetails";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { IHostel } from "../../types/types";
 import { createHostel } from "../../services/firebase";
 import { Loader } from "../../components/Loader/Loader";
@@ -26,8 +26,14 @@ const addhotelform: IHostel = {
 
 const AddEditHostel: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isEdit = location.state?.edit;
+  const hostelDetails = location.state?.hostelDetails;
+
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState(addhotelform);
+  const [formData, setFormData] = useState(
+    isEdit ? hostelDetails : addhotelform
+  );
   const [errors, setErrors] = useState<any>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -114,7 +120,7 @@ const AddEditHostel: React.FC = () => {
       setIsLoading(false);
     }
 
-    // navigate("/");
+    navigate("/");
   };
 
   return (

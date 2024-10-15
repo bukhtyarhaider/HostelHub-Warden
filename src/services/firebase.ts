@@ -295,9 +295,16 @@ export const createHostel = async (hostel: IHostel) => {
   }
 
   const imageUrls = await Promise.all(
-    images.map((img) =>
-      uploadImage(img, `hostelImages/${currentUser.uid}/${img.name ?? ""}`)
-    )
+    images.map((img) => {
+      if (img instanceof File) {
+        return uploadImage(
+          img,
+          `hostelImages/${currentUser.uid}/${img.name ?? ""}`
+        );
+      } else {
+        return img;
+      }
+    })
   );
 
   const hostelData = {

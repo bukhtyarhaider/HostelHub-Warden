@@ -10,11 +10,14 @@ const ReviewConfirm: React.FC<ReviewConfirmProps> = ({ formData }) => {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   useEffect(() => {
-    // Generate image URLs from the file objects in formData.images
     if (formData.images) {
-      const imageUrls = formData.images.map((image: File) =>
-        URL.createObjectURL(image)
-      );
+      const imageUrls = formData.images.map((image: Blob | MediaSource) => {
+        if (image instanceof File) {
+          return URL.createObjectURL(image);
+        } else {
+          return image;
+        }
+      });
       setGalleryImages(imageUrls);
     }
   }, [formData.images]);
