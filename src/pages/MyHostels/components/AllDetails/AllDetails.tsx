@@ -6,6 +6,7 @@ import { getHostelDetails } from "../../../../services/firebase";
 import { Hostel } from "../../../../types/types";
 import { Loader } from "../../../../components/Loader/Loader";
 import { useNavigate } from "react-router-dom";
+import NoHostelFound from "../../../../components/NoHostelFound/NoHostelFound";
 
 const AllDetails = () => {
   const navigate = useNavigate();
@@ -35,14 +36,17 @@ const AllDetails = () => {
         <button
           onClick={() => {
             navigate("/add-hostel", {
-              state: { edit: true, hostelDetails: hostelData },
+              state: {
+                edit: hostelData?.description ? true : false,
+                hostelDetails: hostelData,
+              },
             });
           }}
         >
-          Edit Hostel
+          {hostelData?.description ? "Edit Hostel" : "Add Hostel"}
         </button>
       </div>
-      {hostelData ? (
+      {hostelData?.description ? (
         <>
           <CustomGallery
             title={hostelData.name ?? ""}
@@ -57,7 +61,7 @@ const AllDetails = () => {
           </div>
         </>
       ) : (
-        <p>Loading...</p>
+        <NoHostelFound />
       )}
       {<Loader hide={!isLoading} />}
     </div>
