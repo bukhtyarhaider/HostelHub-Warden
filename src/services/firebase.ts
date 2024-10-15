@@ -89,8 +89,8 @@ export const signUp = async (userData: SignUpForm) => {
       email,
       phoneNumber,
       hostel: {
-        hostelName,
-        hostelAddress,
+        name: hostelName,
+        location: hostelAddress,
       },
       cnic: { front: cnicFrontPath, back: cnicBackPath },
       createdAt: new Date(),
@@ -267,4 +267,57 @@ export const uploadProfileImage = async (file: File, userEmail: string) => {
       );
     }
   }
+};
+
+const uploadImage = async (image: File, path: string): Promise<string> => {
+  const storageRef = ref(getStorage(), path);
+  const snapshot = await uploadBytes(storageRef, image);
+  return getDownloadURL(snapshot.ref);
+};
+
+export const createHostel = async (hostel: IHostel) => {
+  const {
+    name,
+    email,
+    location,
+    contactNumber,
+    type,
+    description,
+    images,
+    rooms,
+  } = hostel;
+
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("No user is currently signed in.");
+  }
+
+  const imageUrls = await Promise.all(
+    images.map((img) =>
+      uploadImage(img, `hostelImages/${currentUser.uid}/${img.name ?? ""}`)
+    )
+  );
+
+  const hostelData = {
+    name,
+    email,
+    location,
+    contactNumber,
+    type,
+    description,
+    images: imageUrls,
+    rooms,
+  };
+
+  const wardanDocRef = doc(db, "wardan", currentUser.uid);
+
+  await setDoc(
+    wardanDocRef,
+    {
+      hostel: arrayUnion(hostelData),
+    },
+    { merge: true }
+  );
+
+  return "Hostel data and images uploaded successfully.";
 };
