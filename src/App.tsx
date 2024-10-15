@@ -42,35 +42,37 @@ function App() {
     <div className="app-container">
       {authUser && <Sidebar />}
 
-      <div className="main-content">
+      <div className="main-content-container">
         {authUser && <Header user={authUser} />}
-        <Routes>
-          {routes.map((route) => (
+        <div className="main-content">
+          <Routes>
+            {routes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  route.path === "/login" || route.path === "/register" ? (
+                    <route.element />
+                  ) : (
+                    <PrivateRoute
+                      isAuthenticated={!!authUser}
+                      element={route.element}
+                    />
+                  )
+                }
+              />
+            ))}
             <Route
-              key={route.path}
-              path={route.path}
+              path="*"
               element={
-                route.path === "/login" || route.path === "/register" ? (
-                  <route.element />
-                ) : (
-                  <PrivateRoute
-                    isAuthenticated={!!authUser}
-                    element={route.element}
-                  />
-                )
+                <PrivateRoute
+                  isAuthenticated={!!authUser}
+                  element={routes.find((route) => route.path === "/")?.element}
+                />
               }
             />
-          ))}
-          <Route
-            path="*"
-            element={
-              <PrivateRoute
-                isAuthenticated={!!authUser}
-                element={routes.find((route) => route.path === "/")?.element}
-              />
-            }
-          />
-        </Routes>
+          </Routes>
+        </div>
       </div>
     </div>
   );
