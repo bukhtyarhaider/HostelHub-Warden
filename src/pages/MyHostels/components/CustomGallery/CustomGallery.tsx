@@ -1,8 +1,14 @@
 import { useState } from "react";
 import styles from "./CustomGallery.module.scss";
 import { locationIcon } from "../../../../assets";
+import { CustomGalleryProps } from "./CustomGalleryProps";
 
-const CustomGallery = ({ title, subTitle, images }) => {
+const CustomGallery: React.FC<CustomGalleryProps> = ({
+  title,
+  subTitle,
+  images,
+  location,
+}) => {
   const [galleryImages, setGalleryImages] = useState<string[]>(images);
 
   function moveToZeroIndex(index: number) {
@@ -10,11 +16,11 @@ const CustomGallery = ({ title, subTitle, images }) => {
       throw new Error("Index out of bounds");
     }
 
-    const updatedImages = [...galleryImages]; // Create a copy of the current images
-    const element = updatedImages.splice(index, 1)[0]; // Remove the element at the specified index
-    updatedImages.unshift(element); // Insert the removed element at the beginning
+    const updatedImages = [...galleryImages];
+    const element = updatedImages.splice(index, 1)[0];
+    updatedImages.unshift(element);
 
-    setGalleryImages(updatedImages); // Update the state with the new array
+    setGalleryImages(updatedImages);
   }
 
   return (
@@ -33,9 +39,9 @@ const CustomGallery = ({ title, subTitle, images }) => {
           <div className={styles.topContent}>
             <div className={styles.profileCard}>
               <div className={styles.profile}>
-                <div className={styles.profilePicWrapper}>
+                {/* <div className={styles.profilePicWrapper}>
                   <img src="https://picsum.photos/200" />
-                </div>
+                </div> */}
                 <div className={styles.profileContent}>
                   <h2>Robert Morris</h2>
                   <p>Hostel Warden</p>
@@ -48,7 +54,7 @@ const CustomGallery = ({ title, subTitle, images }) => {
                 <span>
                   <img src={locationIcon} />
                 </span>
-                123, downing street, LA.
+                {location}
               </p>
             </div>
           </div>
