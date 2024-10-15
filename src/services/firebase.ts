@@ -309,15 +309,34 @@ export const createHostel = async (hostel: IHostel) => {
     rooms,
   };
 
-  const wardanDocRef = doc(db, "wardan", currentUser.uid);
-
+  const wardenDocRef = doc(db, "wardan", currentUser.uid);
   await setDoc(
-    wardanDocRef,
+    wardenDocRef,
     {
-      hostel: arrayUnion(hostelData),
+      hostel: hostelData,
     },
     { merge: true }
   );
 
   return "Hostel data and images uploaded successfully.";
+};
+
+export const getHostelDetails = async () => {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("No user is currently signed in.");
+  }
+
+  const wardenDocRef = doc(db, "wardan", currentUser.uid);
+
+  const wardenDocSnap = await getDoc(wardenDocRef);
+
+  if (!wardenDocSnap.exists()) {
+    throw new Error("No hostel data found for the current user.");
+  }
+
+  const wardenData = wardenDocSnap.data();
+  const hostelData = wardenData.hostel;
+
+  return hostelData;
 };
