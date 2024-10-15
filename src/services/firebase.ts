@@ -10,9 +10,16 @@ import {
   updatePassword,
   updateProfile,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  arrayUnion,
+} from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { FormData } from "../types/types";
+import { IHostel, SignUpForm } from "../types/types";
+import { generateWardenId } from "../utils/utils";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -43,7 +50,7 @@ export const uploadCnicImage = async (
   }
 };
 
-export const signUp = async (userData: FormData) => {
+export const signUp = async (userData: SignUpForm) => {
   const {
     fullName,
     email,
@@ -54,6 +61,7 @@ export const signUp = async (userData: FormData) => {
     cnicFront,
     cnicBack,
   } = userData;
+
   try {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -61,28 +69,38 @@ export const signUp = async (userData: FormData) => {
       password
     );
     const user = userCredential.user;
-    let cnicFrontPath;
-    if (cnicFront) {
-      cnicFrontPath = await uploadCnicImage(user.uid, cnicFront, "cnicFront");
-    }
-    let cnicBackPath;
-    if (cnicBack) {
-      cnicBackPath = await uploadCnicImage(user.uid, cnicBack, "cnicBack");
-    }
 
-    await setDoc(doc(db, "users", user.uid), {
+    await updateProfile(user, {
+      displayName: fullName,
+    });
+
+    const cnicFrontPath = cnicFront
+      ? await uploadCnicImage(user.uid, cnicFront, "cnicFront")
+      : null;
+    const cnicBackPath = cnicBack
+      ? await uploadCnicImage(user.uid, cnicBack, "cnicBack")
+      : null;
+
+    const wardenId = generateWardenId();
+
+    await setDoc(doc(db, "wardan", user.uid), {
+      wardenId,
       fullName,
       email,
       phoneNumber,
-      hostelName,
-      hostelAddress,
-      cnicFrontPath,
-      cnicBackPath,
-      type: "wardan",
+      hostel: {
+        hostelName,
+        hostelAddress,
+      },
+      cnic: { front: cnicFrontPath, back: cnicBackPath },
+      createdAt: new Date(),
+      status: "pending",
     });
+
     return user;
   } catch (error: any) {
-    throw new Error(error.message);
+    console.error("Error during signup:", error);
+    throw new Error(error.code || error.message);
   }
 };
 
@@ -93,14 +111,60 @@ export const signIn = async (email: string, password: string) => {
       email,
       password
     );
-    return userCredential.user;
+    const user = userCredential.user;
+
+    const applicationDocRef = doc(db, "wardan", user.uid);
+    const applicationDoc = await getDoc(applicationDocRef);
+
+    if (applicationDoc.exists()) {
+      const applicationData = applicationDoc.data();
+
+      if (applicationData.status === "approved") {
+        return user;
+      } else if (applicationData.status === "rejected") {
+        throw new Error(
+          "Your joining request has been rejected. Please contact the admin for more information."
+        );
+      } else {
+        throw new Error(
+          "The user status has not been approved yet. Please contact the admin for more information."
+        );
+      }
+    } else {
+      throw new Error("No warden application found for this user.");
+    }
   } catch (error: any) {
     throw new Error(error.message);
   }
 };
 
 export const observeAuthState = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        // Check the warden application document for the user
+        const wardanDocRef = doc(db, "wardan", user.uid);
+        const wardanDoc = await getDoc(wardanDocRef);
+
+        if (wardanDoc.exists()) {
+          const applicationData = wardanDoc.data();
+
+          if (applicationData.status === "approved") {
+            callback(user);
+          } else {
+            callback(null);
+          }
+        } else {
+          callback(null); // Document doesn't exist, return null
+        }
+      } catch (error: any) {
+        console.error("Error checking warden application status:", error);
+        callback(null);
+      }
+    } else {
+      callback(null);
+    }
+  });
 };
 
 export const signOutUser = async () => {
@@ -130,12 +194,12 @@ export const updateUserProfile = async (
 
       // Update additional information in Firestore
       await setDoc(
-        doc(db, "users", user.uid),
+        doc(db, "wardan", user.uid),
         {
-          contactNumber: phoneNumber,
+          phoneNumber: phoneNumber,
           currentAddress: address,
           currentState: state,
-          profilePhotoURL: profileImageUrl,
+          photoURL: profileImageUrl,
         },
         { merge: true }
       );
@@ -169,12 +233,12 @@ export const updateProfilePassword = async (newPassword: string) => {
 export const getUserProfile = async () => {
   const user = auth.currentUser;
   if (user) {
-    const userDocRef = doc(db, "users", user.uid);
+    const userDocRef = doc(db, "wardan", user.uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
       const userData = userDoc.data();
       return {
-        displayName: user.displayName,
+        displayName: user.displayName ?? userData.fullName,
         email: user.email,
         photoURL: user.photoURL,
         ...userData,

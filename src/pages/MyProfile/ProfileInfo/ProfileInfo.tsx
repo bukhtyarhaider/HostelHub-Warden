@@ -51,10 +51,10 @@ const ProfileInfo: React.FC<any> = ({ userData, setUserData }) => {
       newErrors.email = "Email is invalid";
     }
 
-    if (!userData.contactNumber) {
-      newErrors.contactNumber = "Contact Number is required";
-    } else if (!/^\+?\d{10,13}$/.test(userData.contactNumber)) {
-      newErrors.contactNumber = "Contact Number is invalid";
+    if (!userData.phoneNumber) {
+      newErrors.phoneNumber = "Contact Number is required";
+    } else if (!/^\+?\d{10,13}$/.test(userData.phoneNumber)) {
+      newErrors.phoneNumber = "Contact Number is invalid";
     }
 
     if (!userData.currentAddress) {
@@ -95,7 +95,7 @@ const ProfileInfo: React.FC<any> = ({ userData, setUserData }) => {
 
         await updateUserProfile(
           userData.fullName,
-          userData.contactNumber,
+          userData.phoneNumber,
           userData.currentAddress,
           userData.currentState,
           profileImageUrl
@@ -184,13 +184,13 @@ const ProfileInfo: React.FC<any> = ({ userData, setUserData }) => {
           <div className={styles.input}>
             <CustomInput
               type="text"
-              name="contactNumber"
+              name="phoneNumber"
               placeholder="Contact Number"
-              value={userData.contactNumber}
+              value={userData.phoneNumber}
               onChange={handleChange}
             />
             {errors.phoneNumber && (
-              <div className="error">{errors.contactNumber}</div>
+              <div className="error">{errors.phoneNumber}</div>
             )}
           </div>
         </div>
