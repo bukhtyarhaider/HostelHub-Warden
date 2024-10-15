@@ -15,7 +15,9 @@ import {
   doc,
   setDoc,
   getDoc,
-  arrayUnion,
+  collection,
+  addDoc,
+  getDocs,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { IHostel, SignUpForm } from "../types/types";
@@ -339,4 +341,36 @@ export const getHostelDetails = async () => {
   const hostelData = wardenData.hostel;
 
   return hostelData;
+};
+
+export const saveNotice = async (title: string, content: string) => {
+  const currentUser = auth.currentUser;
+
+  try {
+    const noticeRef = collection(db, "notices");
+
+    await addDoc(noticeRef, {
+      wardanId: currentUser?.uid,
+      title,
+      body: content,
+      date: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error("Error saving notice:", error);
+    throw new Error(error.message);
+  }
+};
+
+export const fetchNotices = async () => {
+  try {
+    const noticesRef = collection(db, "notices");
+    const snapshot = await getDocs(noticesRef);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error: any) {
+    console.error("Error fetching notices:", error);
+    throw new Error(error.message);
+  }
 };
