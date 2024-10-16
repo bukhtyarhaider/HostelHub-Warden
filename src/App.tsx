@@ -44,7 +44,7 @@ function App() {
 
       <div className="main-content-container">
         {authUser && <Header user={authUser} />}
-        <div className="main-content">
+        <div className={authUser ? "main-content" : ""}>
           <Routes>
             {routes.map((route) => (
               <Route
