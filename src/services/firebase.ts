@@ -18,6 +18,7 @@ import {
   collection,
   addDoc,
   getDocs,
+  Timestamp,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { IHostel, SignUpForm } from "../types/types";
@@ -85,7 +86,7 @@ export const signUp = async (userData: SignUpForm) => {
 
     const wardenId = generateWardenId();
 
-    await setDoc(doc(db, "wardan", user.uid), {
+    await setDoc(doc(db, "warden", user.uid), {
       wardenId,
       fullName,
       email,
@@ -95,8 +96,8 @@ export const signUp = async (userData: SignUpForm) => {
         location: hostelAddress,
       },
       cnic: { front: cnicFrontPath, back: cnicBackPath },
-      createdAt: new Date(),
-      status: "pending",
+      createdAt: Timestamp.now(),
+      status: "new",
     });
 
     return user;
@@ -115,21 +116,30 @@ export const signIn = async (email: string, password: string) => {
     );
     const user = userCredential.user;
 
-    const applicationDocRef = doc(db, "wardan", user.uid);
+    const applicationDocRef = doc(db, "warden", user.uid);
     const applicationDoc = await getDoc(applicationDocRef);
 
     if (applicationDoc.exists()) {
       const applicationData = applicationDoc.data();
 
-      if (applicationData.status === "approved") {
+      if (applicationData.status === "active") {
+        console.log("done");
         return user;
       } else if (applicationData.status === "rejected") {
         throw new Error(
           "Your joining request has been rejected. Please contact the admin for more information."
         );
+      } else if (applicationData.status === "banned") {
+        throw new Error(
+          "Your account is banned for HostelHub. Please contact the admin for more information."
+        );
+      } else if (applicationData.status === "new") {
+        throw new Error(
+          "The your status has not been approved yet. Please contact the admin for more information."
+        );
       } else {
         throw new Error(
-          "The user status has not been approved yet. Please contact the admin for more information."
+          "Something went wrong. Please contact the admin for more information."
         );
       }
     } else {
@@ -145,13 +155,13 @@ export const observeAuthState = (callback: (user: User | null) => void) => {
     if (user) {
       try {
         // Check the warden application document for the user
-        const wardanDocRef = doc(db, "wardan", user.uid);
+        const wardanDocRef = doc(db, "warden", user.uid);
         const wardanDoc = await getDoc(wardanDocRef);
 
         if (wardanDoc.exists()) {
           const applicationData = wardanDoc.data();
 
-          if (applicationData.status === "approved") {
+          if (applicationData.status === "active") {
             callback(user);
           } else {
             callback(null);
@@ -196,7 +206,7 @@ export const updateUserProfile = async (
 
       // Update additional information in Firestore
       await setDoc(
-        doc(db, "wardan", user.uid),
+        doc(db, "warden", user.uid),
         {
           phoneNumber: phoneNumber,
           currentAddress: address,
@@ -235,7 +245,7 @@ export const updateProfilePassword = async (newPassword: string) => {
 export const getUserProfile = async () => {
   const user = auth.currentUser;
   if (user) {
-    const userDocRef = doc(db, "wardan", user.uid);
+    const userDocRef = doc(db, "warden", user.uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
       const userData = userDoc.data();
@@ -318,7 +328,7 @@ export const createHostel = async (hostel: IHostel) => {
     rooms,
   };
 
-  const wardenDocRef = doc(db, "wardan", currentUser.uid);
+  const wardenDocRef = doc(db, "warden", currentUser.uid);
   await setDoc(
     wardenDocRef,
     {
@@ -336,7 +346,7 @@ export const getHostelDetails = async () => {
     throw new Error("No user is currently signed in.");
   }
 
-  const wardenDocRef = doc(db, "wardan", currentUser.uid);
+  const wardenDocRef = doc(db, "warden", currentUser.uid);
 
   const wardenDocSnap = await getDoc(wardenDocRef);
 
