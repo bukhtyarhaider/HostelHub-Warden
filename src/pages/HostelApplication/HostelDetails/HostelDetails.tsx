@@ -32,19 +32,18 @@ const HostelDetails: React.FC<HostelDetailsProps> = ({
       <h3 className={styles.heading}>Hostel Information</h3>
 
       <form className={styles.form}>
-        {/* Hostel Name */}
         <div className={styles.inputContainer}>
           <label>Hostel Name</label>
           <div className={styles.input}>
             <CustomInput
               type="text"
-              name="hostelName"
-              placeholder="Downing Hostel"
+              name="name"
+              placeholder="Hostel name"
               label=""
-              value={formData.hostelName}
+              value={formData.name}
               onChange={handleChange}
             />
-            {errors.hostelName && <div className="error">{errors.hostelName}</div>}
+            {errors.name && <div className="error">{errors.name}</div>}
           </div>
         </div>
 
@@ -54,13 +53,13 @@ const HostelDetails: React.FC<HostelDetailsProps> = ({
           <div className={styles.input}>
             <CustomInput
               type="text"
-              name="hostelLocation"
-              placeholder="123, Downing street, China town"
+              name="location"
+              placeholder="Hostel location"
               label=""
-              value={formData.hostelLocation}
+              value={formData.location}
               onChange={handleChange}
             />
-            {errors.hostelLocation && <div className="error">{errors.hostelLocation}</div>}
+            {errors.location && <div className="error">{errors.location}</div>}
           </div>
         </div>
 
@@ -92,7 +91,9 @@ const HostelDetails: React.FC<HostelDetailsProps> = ({
               value={formData.contactNumber}
               onChange={handleChange}
             />
-            {errors.contactNumber && <div className="error">{errors.contactNumber}</div>}
+            {errors.contactNumber && (
+              <div className="error">{errors.contactNumber}</div>
+            )}
           </div>
         </div>
 
@@ -101,7 +102,7 @@ const HostelDetails: React.FC<HostelDetailsProps> = ({
           <label>Hostel Type</label>
           <div className={styles.input}>
             <Select
-              defaultValue={formData.hostelType}
+              defaultValue={formData.type}
               style={{ width: "100%" }}
               onChange={(value) => handleSelectChange("hostelType", value)}
             >
@@ -117,10 +118,10 @@ const HostelDetails: React.FC<HostelDetailsProps> = ({
           <label>Hostel Description</label>
           <div className={styles.input}>
             <TextArea
-              name="hostelDescription"
+              name="description"
               placeholder="Type here..."
               rows={4}
-              value={formData.hostelDescription}
+              value={formData.description}
               onChange={handleChange}
             />
           </div>

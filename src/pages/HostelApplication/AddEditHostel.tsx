@@ -6,31 +6,36 @@ import CustomButton from "../../components/CustomButton/CustomButton";
 import Documents from "./Documents/Documents";
 import ReviewConfirm from "./ReviewConfirm/ReviewConfirm";
 import RoomsDetails from "./RoomsDetails/RoomsDetails";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { IHostel } from "../../types/types";
+import { createHostel } from "../../services/firebase";
+import { Loader } from "../../components/Loader/Loader";
 
 const { Step } = Steps;
 
-const initialFormData = {
-  fullName: "John Doe",
-  email: "LcH0O@example.com",
-  phoneNumber: "1234567890",
-  hostelName: "Downing Hostel",
+const addhotelform: IHostel = {
+  name: "",
+  email: "",
+  location: "",
   contactNumber: "",
-  hostelLocation: "",
-  hostelType: "Student Accommodation",
-  hostelId: "142",
-  roomNumber: "DH-04",
-  roomType: "Single Room",
-  hostelRent: "1000",
-  stayDuration: "3-months",
+  type: "Student",
+  description: "",
   images: [],
+  rooms: [],
 };
 
 const AddEditHostel: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isEdit = location.state?.edit;
+  const hostelDetails = location.state?.hostelDetails;
+
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(
+    isEdit ? hostelDetails : addhotelform
+  );
   const [errors, setErrors] = useState<any>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const steps = [
     {
@@ -75,9 +80,8 @@ const AddEditHostel: React.FC = () => {
 
     if (currentStep === 0) {
       // Specific validation for step 1
-      if (!formData.hostelName)
-        tempErrors.hostelName = "Hostel name is required";
-      if (!formData.hostelLocation)
+      if (!formData.name) tempErrors.hostelName = "Hostel name is required";
+      if (!formData.location)
         tempErrors.hostelLocation = "Hostel location is required";
       if (!formData.email) tempErrors.email = "Email is required";
       if (!formData.contactNumber)
@@ -104,9 +108,18 @@ const AddEditHostel: React.FC = () => {
     setCurrentStep(currentStep - 1);
   };
 
-  const handleSubmit = () => {
-    console.log("Form Data:", formData);
-    message.success("Application Submitted!");
+  const handleSubmit = async () => {
+    try {
+      setIsLoading(true);
+      const response = await createHostel(formData);
+      console.log(response);
+      message.success("Application Submitted!");
+    } catch (error) {
+      console.error("Error uploading user data and images:", error);
+    } finally {
+      setIsLoading(false);
+    }
+
     navigate("/");
   };
 
@@ -154,6 +167,7 @@ const AddEditHostel: React.FC = () => {
             />
           )}
         </div>
+        {<Loader hide={!isLoading} />}
       </div>
     </>
   );

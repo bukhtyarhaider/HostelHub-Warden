@@ -7,15 +7,17 @@ interface ReviewConfirmProps {
 }
 
 const ReviewConfirm: React.FC<ReviewConfirmProps> = ({ formData }) => {
-  // State to store image URLs
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   useEffect(() => {
-    // Generate image URLs from the file objects in formData.images
     if (formData.images) {
-      const imageUrls = formData.images.map((image: File) =>
-        URL.createObjectURL(image)
-      );
+      const imageUrls = formData.images.map((image: Blob | MediaSource) => {
+        if (image instanceof File) {
+          return URL.createObjectURL(image);
+        } else {
+          return image;
+        }
+      });
       setGalleryImages(imageUrls);
     }
   }, [formData.images]);
@@ -25,11 +27,11 @@ const ReviewConfirm: React.FC<ReviewConfirmProps> = ({ formData }) => {
       throw new Error("Index out of bounds");
     }
 
-    const updatedImages = [...galleryImages]; // Create a copy of the current images
-    const element = updatedImages.splice(index, 1)[0]; // Remove the element at the specified index
-    updatedImages.unshift(element); // Insert the removed element at the beginning
+    const updatedImages = [...galleryImages];
+    const element = updatedImages.splice(index, 1)[0];
+    updatedImages.unshift(element);
 
-    setGalleryImages(updatedImages); // Update the state with the new array
+    setGalleryImages(updatedImages);
   }
 
   const columns = [
@@ -40,8 +42,8 @@ const ReviewConfirm: React.FC<ReviewConfirmProps> = ({ formData }) => {
     },
     {
       title: "Room Type",
-      dataIndex: "roomType",
-      key: "roomType",
+      dataIndex: "type",
+      key: "type",
     },
     {
       title: "Number of Beds",
@@ -60,21 +62,9 @@ const ReviewConfirm: React.FC<ReviewConfirmProps> = ({ formData }) => {
     },
     {
       title: "Room Price/Seat",
-      dataIndex: "roomPrice",
-      key: "roomPrice",
+      dataIndex: "price",
+      key: "price",
     },
-  ];
-
-  const roomData = [
-    {
-      roomNumber: "DH-01",
-      roomType: "Bunker Room",
-      numberOfBeds: "04",
-      washroom: "01",
-      seatsAvailable: "02",
-      roomPrice: "$1578",
-    },
-    // Add more room data as needed...
   ];
 
   return (
@@ -83,8 +73,8 @@ const ReviewConfirm: React.FC<ReviewConfirmProps> = ({ formData }) => {
         <div className={styles.card}>
           <h4 className={styles.cardTitle}>Your Details</h4>
           <div className={styles.detail}>
-            <h5>Full Name:</h5>
-            <p>{formData.fullName}</p>
+            <h5>Name:</h5>
+            <p>{formData.name}</p>
           </div>
           <div className={styles.detail}>
             <h5>Email:</h5>
@@ -92,15 +82,15 @@ const ReviewConfirm: React.FC<ReviewConfirmProps> = ({ formData }) => {
           </div>
           <div className={styles.detail}>
             <h5>Phone Number:</h5>
-            <p>{formData.phoneNumber}</p>
+            <p>{formData.contactNumber}</p>
           </div>
           <div className={styles.detail}>
-            <h5>Selected Hostel:</h5>
-            <p>{formData.hostelName}</p>
+            <h5>Location:</h5>
+            <p>{formData.location}</p>
           </div>
           <div className={styles.detail}>
-            <h5>Selected Room:</h5>
-            <p>{formData.roomNumber}</p>
+            <h5>Type:</h5>
+            <p>{formData.type}</p>
           </div>
         </div>
 
@@ -132,7 +122,7 @@ const ReviewConfirm: React.FC<ReviewConfirmProps> = ({ formData }) => {
         <h4 className={styles.tableTitle}>All Rooms</h4>
         <Table
           columns={columns}
-          dataSource={roomData}
+          dataSource={formData.rooms}
           pagination={{ pageSize: 5 }}
         />
       </div>

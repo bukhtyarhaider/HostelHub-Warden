@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Table, Modal, Input, Select } from "antd";
 import styles from "./RoomsDetails.module.scss";
+import { Room } from "../../../types/types";
 
 interface RoomsDetailsProps {
   formData: any;
@@ -16,13 +17,13 @@ const RoomsDetails: React.FC<RoomsDetailsProps> = ({
   errors,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [roomData, setRoomData] = useState({
+  const [roomData, setRoomData] = useState<Room>({
     roomNumber: "",
-    roomType: "",
-    numberOfBeds: "",
-    washrooms: "",
-    seatsAvailable: "",
-    pricePerSeat: "",
+    type: "Single Room",
+    numberOfBeds: 0,
+    washroom: 0,
+    seatsAvailable: 0,
+    price: 0,
   });
 
   const handleModalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,11 +46,11 @@ const RoomsDetails: React.FC<RoomsDetailsProps> = ({
     // Clear roomData state and close modal
     setRoomData({
       roomNumber: "",
-      roomType: "",
-      numberOfBeds: "",
-      washrooms: "",
-      seatsAvailable: "",
-      pricePerSeat: "",
+      type: "Single Room",
+      numberOfBeds: 0,
+      washroom: 0,
+      seatsAvailable: 0,
+      price: 0,
     });
     setIsModalVisible(false);
   };
@@ -60,9 +61,9 @@ const RoomsDetails: React.FC<RoomsDetailsProps> = ({
 
   const columns = [
     { title: "Room Number", dataIndex: "roomNumber", key: "roomNumber" },
-    { title: "Room Type", dataIndex: "roomType", key: "roomType" },
+    { title: "Room Type", dataIndex: "type", key: "type" },
     { title: "Number of Beds", dataIndex: "numberOfBeds", key: "numberOfBeds" },
-    { title: "Washrooms", dataIndex: "washrooms", key: "washrooms" },
+    { title: "Washrooms", dataIndex: "washroom", key: "washroom" },
     {
       title: "Seats Available",
       dataIndex: "seatsAvailable",
@@ -70,8 +71,8 @@ const RoomsDetails: React.FC<RoomsDetailsProps> = ({
     },
     {
       title: "Room Price/Seat",
-      dataIndex: "pricePerSeat",
-      key: "pricePerSeat",
+      dataIndex: "price",
+      key: "price",
     },
   ];
 
@@ -115,8 +116,8 @@ const RoomsDetails: React.FC<RoomsDetailsProps> = ({
 
           <label>Room Type</label>
           <Select
-            value={roomData.roomType}
-            onChange={(value) => handleSelectChange("roomType", value)}
+            value={roomData.type}
+            onChange={(value) => handleSelectChange("type", value)}
             style={{ width: "100%" }}
           >
             <Option value="Single Room">Single Room</Option>
@@ -134,8 +135,8 @@ const RoomsDetails: React.FC<RoomsDetailsProps> = ({
 
           <label>Washrooms</label>
           <Input
-            name="washrooms"
-            value={roomData.washrooms}
+            name="washroom"
+            value={roomData.washroom}
             onChange={handleModalChange}
             placeholder="Enter Number of Washrooms"
           />
@@ -150,8 +151,8 @@ const RoomsDetails: React.FC<RoomsDetailsProps> = ({
 
           <label>Price/Seat</label>
           <Input
-            name="pricePerSeat"
-            value={roomData.pricePerSeat}
+            name="price"
+            value={roomData.price}
             onChange={handleModalChange}
             placeholder="Enter Price/Seat"
           />

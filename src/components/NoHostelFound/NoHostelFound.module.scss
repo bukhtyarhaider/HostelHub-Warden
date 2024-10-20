@@ -1,0 +1,34 @@
+.noHostelFound {
+    padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      background-color: #f9fafc; 
+      margin-bottom: 20px;
+      border-radius: 10px;
+    
+      .iconContainer {
+        margin-bottom: 20px;
+    
+        .icon {
+          width: 100px;
+          height: 100px;
+        }
+      }
+    
+      .title {
+        font-size: 20x;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+      }
+    
+      .message {
+        font-size: 14px;
+        color: #777;
+      }
+    }
+    

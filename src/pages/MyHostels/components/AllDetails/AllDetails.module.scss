@@ -2,6 +2,25 @@
 
 .allDetailsContainer {
   padding: 40px;
+  .top {
+    @include flex(row, space-between, center);
+    h2 {
+      font-family: Inter;
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 30px;
+    }
+
+    button {
+      padding: 9px 17px;
+      border-radius: 4px;
+      background: var(--blue);
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      color: white;
+    }
+  }
   .description {
     border: 1px solid #d8dfe0;
     border-radius: 5px;

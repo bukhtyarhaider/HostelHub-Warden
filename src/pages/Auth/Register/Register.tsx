@@ -3,9 +3,13 @@ import styles from "./Register.module.scss";
 import CustomInput from "../../../components/CustomInput/CustomInput";
 import { Link, useNavigate } from "react-router-dom";
 import Documents from "./Documents/Documents";
-import { successIcon } from "../../../assets";
 
-const initialState = {
+import { successIcon } from "../../../assets";
+import { signUp } from "../../../services/firebase";
+import { FormData } from "../../../types/types";
+import { Loader } from "../../../components/Loader/Loader";
+
+const initialState: FormData = {
   fullName: "",
   email: "",
   phoneNumber: "",
@@ -13,27 +17,27 @@ const initialState = {
   hostelAddress: "",
   password: "",
   confirmPassword: "",
-  cnicFront: "",
-  cnicBack: "",
+  cnicFront: null,
+  cnicBack: null,
 };
+
 const Register = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // Step 1: Form, Step 2: File Upload, Step 3: Done
-  const [formData, setFormData] = useState(initialState);
-
-  const [errors, setErrors] = useState(initialState);
+  const [step, setStep] = useState<number>(1);
+  const [formData, setFormData] = useState<FormData>(initialState);
+  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [name]: value as any });
     setErrors({ ...errors, [name]: "" });
   };
 
   const validateStep1 = () => {
     let valid = true;
-    let newErrors = { ...errors };
+    let newErrors: Partial<FormData> = {};
 
-    // Check for empty fields in Step 1
     [
       "fullName",
       "email",
@@ -43,13 +47,16 @@ const Register = () => {
       "password",
       "confirmPassword",
     ].forEach((field) => {
-      if (!formData[field]) {
-        newErrors[field] = "This field is required";
+      if (!formData[field as keyof FormData]) {
+        newErrors[field as keyof FormData] = "This field is required";
         valid = false;
       }
     });
 
-    // Additional validation (e.g., password matching) can go here
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+      valid = false;
+    }
 
     setErrors(newErrors);
     return valid;
@@ -57,12 +64,11 @@ const Register = () => {
 
   const validateStep2 = () => {
     let valid = true;
-    let newErrors = { ...errors };
+    let newErrors: Partial<FormData> = {};
 
-    // Check for uploaded files in Step 2
     ["cnicFront", "cnicBack"].forEach((field) => {
-      if (!formData[field]) {
-        newErrors[field] = "This file is required";
+      if (!formData[field as keyof FormData]) {
+        newErrors[field as keyof FormData] = "This file is required";
         valid = false;
       }
     });
@@ -71,20 +77,23 @@ const Register = () => {
     return valid;
   };
 
-  const handleNextStep = () => {
-    if (step === 1) {
-      if (validateStep1()) {
-        setStep(2);
+  const handleNextStep = async () => {
+    if (step === 1 && validateStep1()) {
+      setStep(2);
+    } else if (step === 2 && validateStep2()) {
+      try {
+        setIsLoading(true);
+        const user = await signUp(formData);
+        if (user) setStep(3);
+      } catch (error: any) {
+        console.error(error);
+        alert("Failed to register: " + error.message);
       }
-    } else if (step === 2) {
-      if (validateStep2()) {
-        setStep(3);
-      }
+      setIsLoading(false);
     }
   };
 
   const handleSubmit = () => {
-    // Final submission logic
     navigate("/login");
   };
 
@@ -244,6 +253,7 @@ const Register = () => {
           />
           <div className={styles.buttonWrapper}>
             <button
+              disabled={isLoading}
               type="button"
               className={styles.submitButton}
               onClick={handleNextStep}
@@ -275,6 +285,8 @@ const Register = () => {
           </div>
         </div>
       )}
+
+      {<Loader hide={!isLoading} />}
     </div>
   );
 };
