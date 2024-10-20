@@ -86,16 +86,19 @@ export const signUp = async (userData: SignUpForm) => {
 
     const wardenId = generateWardenId();
 
-    await setDoc(doc(db, "warden", user.uid), {
+    const hostelRef = await addDoc(collection(db, "hostels"), {
+      name: hostelName,
+      location: hostelAddress,
+    });
+
+    await setDoc(doc(db, "wardens", user.uid), {
+      id: user.uid,
       wardenId,
       fullName,
       email,
       phoneNumber,
-      hostel: {
-        name: hostelName,
-        location: hostelAddress,
-      },
       cnic: { front: cnicFrontPath, back: cnicBackPath },
+      hostelId: hostelRef.id,
       createdAt: Timestamp.now(),
       status: "new",
     });
@@ -116,7 +119,7 @@ export const signIn = async (email: string, password: string) => {
     );
     const user = userCredential.user;
 
-    const applicationDocRef = doc(db, "warden", user.uid);
+    const applicationDocRef = doc(db, "wardens", user.uid);
     const applicationDoc = await getDoc(applicationDocRef);
 
     if (applicationDoc.exists()) {
@@ -155,7 +158,7 @@ export const observeAuthState = (callback: (user: User | null) => void) => {
     if (user) {
       try {
         // Check the warden application document for the user
-        const wardanDocRef = doc(db, "warden", user.uid);
+        const wardanDocRef = doc(db, "wardens", user.uid);
         const wardanDoc = await getDoc(wardanDocRef);
 
         if (wardanDoc.exists()) {
@@ -206,7 +209,7 @@ export const updateUserProfile = async (
 
       // Update additional information in Firestore
       await setDoc(
-        doc(db, "warden", user.uid),
+        doc(db, "wardens", user.uid),
         {
           phoneNumber: phoneNumber,
           currentAddress: address,
@@ -245,7 +248,7 @@ export const updateProfilePassword = async (newPassword: string) => {
 export const getUserProfile = async () => {
   const user = auth.currentUser;
   if (user) {
-    const userDocRef = doc(db, "warden", user.uid);
+    const userDocRef = doc(db, "wardens", user.uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
       const userData = userDoc.data();
@@ -304,40 +307,53 @@ export const createHostel = async (hostel: IHostel) => {
     throw new Error("No user is currently signed in.");
   }
 
-  const imageUrls = await Promise.all(
-    images.map((img) => {
-      if (img instanceof File) {
-        return uploadImage(
-          img,
-          `hostelImages/${currentUser.uid}/${img.name ?? ""}`
-        );
-      } else {
-        return img;
-      }
-    })
-  );
+  const wardenDocRef = doc(db, "wardens", currentUser.uid);
+  const wardenDoc = await getDoc(wardenDocRef);
+  if (!wardenDoc.exists()) {
+    throw new Error("Warden record does not exist.");
+  }
 
-  const hostelData = {
-    name,
-    email,
-    location,
-    contactNumber,
-    type,
-    description,
-    images: imageUrls,
-    rooms,
-  };
+  const existingHostelId = wardenDoc.data().hostelId;
+  const hostelRef = doc(db, "hostels", existingHostelId);
 
-  const wardenDocRef = doc(db, "warden", currentUser.uid);
+  const imageUrls =
+    images instanceof Array
+      ? await Promise.all(
+          images.map((img) => {
+            if (img instanceof File) {
+              return uploadImage(
+                img,
+                `hostelImages/${currentUser.uid}/${img.name}`
+              );
+            } else {
+              return img;
+            }
+          })
+        )
+      : [];
+
   await setDoc(
-    wardenDocRef,
+    hostelRef,
     {
-      hostel: hostelData,
+      name,
+      email,
+      location,
+      contactNumber,
+      type,
+      description,
+      images: imageUrls,
     },
     { merge: true }
   );
 
-  return "Hostel data and images uploaded successfully.";
+  if (rooms && rooms.length > 0) {
+    const roomsRef = collection(db, `hostels/${existingHostelId}/rooms`);
+    for (const room of rooms) {
+      await addDoc(roomsRef, room);
+    }
+  }
+
+  return "Hostel updated successfully with new details and rooms.";
 };
 
 export const getHostelDetails = async () => {
@@ -346,36 +362,52 @@ export const getHostelDetails = async () => {
     throw new Error("No user is currently signed in.");
   }
 
-  const wardenDocRef = doc(db, "warden", currentUser.uid);
-
+  const wardenDocRef = doc(db, "wardens", currentUser.uid);
   const wardenDocSnap = await getDoc(wardenDocRef);
-
   if (!wardenDocSnap.exists()) {
     throw new Error("No hostel data found for the current user.");
   }
 
-  const wardenData = wardenDocSnap.data();
-  const hostelData = wardenData.hostel;
+  const hostelId = wardenDocSnap.data().hostelId;
+  const hostelRef = doc(db, "hostels", hostelId);
+  const hostelSnap = await getDoc(hostelRef);
 
-  return hostelData;
+  if (!hostelSnap.exists()) {
+    throw new Error("No details found for the associated hostel.");
+  }
+
+  const hostelData = hostelSnap.data();
+  const roomsRef = collection(db, `hostels/${hostelId}/rooms`);
+  const roomSnap = await getDocs(roomsRef);
+
+  return {
+    ...hostelData,
+    rooms: roomSnap.docs.map((doc) => doc.data()),
+  };
 };
 
 export const saveNotice = async (title: string, content: string) => {
   const currentUser = auth.currentUser;
-
-  try {
-    const noticeRef = collection(db, "notices");
-
-    await addDoc(noticeRef, {
-      wardanId: currentUser?.uid,
-      title,
-      body: content,
-      date: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    console.error("Error saving notice:", error);
-    throw new Error(error.message);
+  if (!currentUser) {
+    throw new Error("No user is currently signed in.");
   }
+
+  const wardenDocRef = doc(db, "wardens", currentUser.uid);
+  const wardenDoc = await getDoc(wardenDocRef);
+  if (!wardenDoc.exists() || !wardenDoc.data().hostelId) {
+    throw new Error("Warden not linked to any hostel.");
+  }
+
+  const hostelId = wardenDoc.data().hostelId;
+  const noticesRef = collection(db, "notices");
+
+  await addDoc(noticesRef, {
+    wardenId: currentUser.uid,
+    hostelId: hostelId,
+    title,
+    body: content,
+    date: new Date().toISOString(),
+  });
 };
 
 export const fetchNotices = async () => {
