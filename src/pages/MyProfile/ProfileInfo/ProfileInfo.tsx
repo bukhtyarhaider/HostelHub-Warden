@@ -117,17 +117,21 @@ const ProfileInfo: React.FC<any> = ({ userData, setUserData }) => {
     <div className={styles.profileContainer}>
       <h2 className={styles.heading}>User Profile</h2>
       <div className={styles.profilePictureContainer}>
-        <img
-          src={
-            profileImage
-              ? URL.createObjectURL(profileImage)
-              : userData.photoURL
-              ? userData.photoURL
-              : avatar
-          }
-          alt="Profile"
-          className={styles.profilePicture}
-        />
+        {!!profileImage || userData.photoURL ? (
+          <img
+            src={
+              profileImage
+                ? URL.createObjectURL(profileImage)
+                : userData.photoURL
+            }
+            alt="Profile"
+            className={styles.profilePicture}
+          />
+        ) : (
+          <div className={styles.avatarPlaceholder}>
+            {!!userData?.fullName ? userData?.fullName?.charAt(0) : "Warden"}
+          </div>
+        )}
         <div className={styles.cameraIcon}>
           <label htmlFor="profileImage">
             <img
@@ -171,6 +175,7 @@ const ProfileInfo: React.FC<any> = ({ userData, setUserData }) => {
             <CustomInput
               type="email"
               name="email"
+              disabled={true}
               placeholder="Email"
               value={userData.email}
               onChange={handleChange}
