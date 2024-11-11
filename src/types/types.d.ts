@@ -1,3 +1,4 @@
+export type BookingApplicationStatus = "pending" | "approved" | "rejected";
 export interface FormData {
   fullName: string;
   email: string;
@@ -48,4 +49,36 @@ export interface Room {
   washroom: number;
   seatsAvailable: number;
   price: number;
+}
+
+interface BookingApplication {
+  id: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  documents: {
+    cnicFront: string;
+    cnicBack: string;
+    studentId: string;
+  };
+  hostel: {
+    name: string;
+    type: string;
+    id: string;
+    location: string;
+    image: string;
+  };
+  booking: {
+    roomNumber: string;
+    roomType: string;
+    hostelRent: string;
+    stay: {
+      duration: string;
+      startDate: string;
+      endDate: string;
+    };
+  };
+  createdAt: Timestamp;
+  status: BookingApplicationStatus;
 }

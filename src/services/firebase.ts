@@ -19,9 +19,12 @@ import {
   addDoc,
   getDocs,
   Timestamp,
+  query,
+  where,
+  updateDoc,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { IHostel, SignUpForm } from "../types/types";
+import { BookingApplication, IHostel, SignUpForm } from "../types/types";
 import { generateWardenId } from "../utils/utils";
 
 const firebaseConfig = {
@@ -421,5 +424,59 @@ export const fetchNotices = async () => {
   } catch (error: any) {
     console.error("Error fetching notices:", error);
     throw new Error(error.message);
+  }
+};
+
+export const fetchHostelBookingApplicationRequests = async (): Promise<
+  BookingApplication[]
+> => {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("No user is currently signed in.");
+  }
+  const wardenDocRef = doc(db, "wardens", currentUser.uid);
+  const wardenDocSnap = await getDoc(wardenDocRef);
+  if (!wardenDocSnap.exists()) {
+    throw new Error("No hostel data found for the current user.");
+  }
+
+  const hostelId = wardenDocSnap.data().hostelId;
+
+  const applicationsRef = collection(db, "bookingApplications");
+
+  // Query to fetch booking applications of the current user
+  const userApplicationsQuery = query(
+    applicationsRef,
+    where("hostel.id", "==", hostelId)
+  );
+
+  const snapshot = await getDocs(userApplicationsQuery);
+
+  const applications: BookingApplication[] = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<BookingApplication, "id">),
+  }));
+
+  return applications;
+};
+
+export const updateBookingApplicationStatus = async (
+  docId: string,
+  newStatus: string
+): Promise<string> => {
+  try {
+    const bookingApplicationDocRef = doc(db, "bookingApplications", docId);
+    await updateDoc(bookingApplicationDocRef, {
+      status: newStatus,
+    });
+
+    return "Booking Application status updated successfully.";
+  } catch (error) {
+    throw new Error(
+      "Failed to update Booking Application status: " +
+        (error instanceof Error
+          ? error.message
+          : "An unexpected error occurred")
+    );
   }
 };
