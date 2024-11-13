@@ -7,6 +7,8 @@ import {
   updateBookingApplicationStatus,
 } from "../../services/firebase";
 import { Loader } from "../../components/Loader/Loader";
+import { Timestamp } from "firebase/firestore";
+import { formatTimestamp } from "../../utils/utils";
 
 interface DocumentDetailProps {
   title: string;
@@ -193,6 +195,7 @@ const BookingRequests = () => {
       title: "Request Date",
       dataIndex: "createdAt",
       key: "RequestDate",
+      render: (createdAt: Timestamp) => formatTimestamp(createdAt),
     },
     {
       title: "Email",
