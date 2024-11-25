@@ -7,6 +7,7 @@ import styles from "./HostelNotices.module.scss";
 import CustomInput from "../../../../components/CustomInput/CustomInput";
 import { fetchNotices, saveNotice } from "../../../../services/firebase";
 import { Loader } from "../../../../components/Loader/Loader";
+import NotFound from "../../../../components/NotFound/NotFound";
 
 const HostelNotices = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -58,19 +59,28 @@ const HostelNotices = () => {
         <button onClick={toggleModal}>Add New Notice</button>
       </div>
 
-      <div className={styles.cardsContainer}>
-        {notices.map((data) => (
-          <div key={data.id} className={styles.card}>
-            <h2 className={styles.cardTitle}>{data.title}</h2>
-            <br />
-            <div dangerouslySetInnerHTML={{ __html: data.body }} />
-            <br />
-            <p className={styles.date}>
-              {new Date(data.date).toLocaleDateString()}
-            </p>
-          </div>
-        ))}
-      </div>
+      {notices.length ? (
+        <div className={styles.cardsContainer}>
+          {notices.map((data) => (
+            <div key={data.id} className={styles.card}>
+              <h2 className={styles.cardTitle}>{data.title}</h2>
+              <br />
+              <div dangerouslySetInnerHTML={{ __html: data.body }} />
+              <br />
+              <p className={styles.date}>
+                {new Date(data.date).toLocaleDateString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ padding: "20px" }}>
+          <NotFound
+            title="No Notice Found"
+            message="You have not submitted any hostel notices yet."
+          />
+        </div>
+      )}
 
       <Modal
         title="Add New Notice"
@@ -92,6 +102,7 @@ const HostelNotices = () => {
           onChange={handleEditorChange}
           style={{ height: "250px" }}
         />
+        <br />
       </Modal>
       <Loader hide={!isLoading} />
     </div>
