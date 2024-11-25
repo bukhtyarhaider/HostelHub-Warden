@@ -6,7 +6,7 @@ import { getHostelDetails } from "../../../../services/firebase";
 import { Hostel } from "../../../../types/types";
 import { Loader } from "../../../../components/Loader/Loader";
 import { useNavigate } from "react-router-dom";
-import NoHostelFound from "../../../../components/NoHostelFound/NoHostelFound";
+import NoHostelFound from "../../../../components/NotFound/NotFound";
 
 const AllDetails = () => {
   const navigate = useNavigate();
@@ -61,7 +61,9 @@ const AllDetails = () => {
           </div>
         </>
       ) : (
-        <NoHostelFound />
+        <div style={{ padding: "20px" }}>
+          <NoHostelFound />
+        </div>
       )}
       {<Loader hide={!isLoading} />}
     </div>

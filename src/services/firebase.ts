@@ -24,7 +24,12 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { BookingApplication, IHostel, SignUpForm } from "../types/types";
+import {
+  BookingApplication,
+  Hostel,
+  IHostel,
+  SignUpForm,
+} from "../types/types";
 import { generateWardenId } from "../utils/utils";
 
 const firebaseConfig = {
@@ -386,7 +391,7 @@ export const getHostelDetails = async () => {
   return {
     ...hostelData,
     rooms: roomSnap.docs.map((doc) => doc.data()),
-  };
+  } as Hostel;
 };
 
 export const saveNotice = async (title: string, content: string) => {
@@ -404,19 +409,34 @@ export const saveNotice = async (title: string, content: string) => {
   const hostelId = wardenDoc.data().hostelId;
   const noticesRef = collection(db, "notices");
 
-  await addDoc(noticesRef, {
+  const noticeRef = await addDoc(noticesRef, {
     wardenId: currentUser.uid,
     hostelId: hostelId,
     title,
     body: content,
     date: new Date().toISOString(),
+    viewed: false,
+  });
+
+  await updateDoc(noticeRef, {
+    id: noticeRef.id,
   });
 };
 
 export const fetchNotices = async () => {
   try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("No user is currently signed in.");
+    }
+
     const noticesRef = collection(db, "notices");
-    const snapshot = await getDocs(noticesRef);
+    const queryNotices = query(
+      noticesRef,
+      where("wardenId", "==", currentUser.uid)
+    );
+    const snapshot = await getDocs(queryNotices);
+
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
