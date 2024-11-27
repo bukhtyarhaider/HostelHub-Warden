@@ -82,3 +82,53 @@ interface BookingApplication {
   createdAt: Timestamp;
   status: BookingApplicationStatus;
 }
+
+interface ReservationHolder {
+  fullName: string;
+  userId: string;
+  email: string;
+  phoneNumber: string;
+  documents: {
+    cnicFront: string;
+    cnicBack: string;
+    studentId?: string;
+  };
+}
+
+interface StayDetails {
+  duration: string;
+  startDate: string;
+  endDate: string;
+}
+
+interface BookingDetails {
+  roomId: string;
+  roomNumber: string;
+  roomType: string;
+  hostelRent: string;
+  stay: StayDetails;
+}
+
+interface ReservedHostel {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  image: string;
+}
+
+interface WardenDetails {
+  wardenId: string;
+  email: string;
+  fullName: string;
+  phoneNumber: string;
+  photoURL?: string;
+}
+
+export interface Reservation {
+  reservationHolder: ReservationHolder;
+  reservationDetails: BookingDetails;
+  hostel: ReservedHostel;
+  wardenDetails: WardenDetails;
+  createdAt: Timestamp;
+}
