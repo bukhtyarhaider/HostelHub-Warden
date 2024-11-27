@@ -1,7 +1,7 @@
 @import "../../mixins";
 
 .sidebar {
-  width: 280px;
+  width: 300px;
   background-color: white;
   @include flex(column, start, center);
   padding: 20px;

@@ -38,16 +38,16 @@ const Header = () => {
           className={({ isActive }) => (isActive ? styles.active : "")}
         >
           <ReactSVG src={home} />
-          <span>Dashboard</span>
+          <span>My Hostels</span>
         </NavLink>
       </li>
       <li>
         <NavLink
-          to="/wardens"
+          to="/booking-requests"
           className={({ isActive }) => (isActive ? styles.active : "")}
         >
           <ReactSVG src={wardensIcon} />
-          <span>All Wardens</span>
+          <span>Booking Requests</span>
         </NavLink>
       </li>
       <li>

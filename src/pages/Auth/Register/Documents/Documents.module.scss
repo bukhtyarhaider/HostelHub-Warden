@@ -1,0 +1,92 @@
+@import "../../../../mixins";
+.documentsContainer {
+  .heading {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 30px;
+    color: #383e49;
+    padding-bottom: 20px;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .uploadSection {
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      margin-bottom: 16px;
+
+      &.fileSelected .uploadBox {
+        border: 2px dashed var(--pale-blue);
+        background-color: #1366d91a;
+      }
+
+      .label {
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 24px;
+        color: #48505e;
+        text-align: start;
+
+        span {
+          color: var(--red);
+        }
+      }
+
+      .error {
+        color: var(--red);
+        font-size: 12px;
+        padding-top: 5px;
+      }
+    }
+
+    .uploadBox {
+      @include flex(column, center, center);
+
+      border: 1px dashed #ccc;
+      border-radius: 8px;
+      padding: 20px;
+
+      min-height: 150px;
+      cursor: pointer;
+
+      label {
+        @include flex(column, center, center);
+
+        img {
+          margin-bottom: 20px;
+        }
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+    }
+
+    .uploadPrompt {
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+      color: var(--grey-100);
+
+      span {
+        color: var(--pale-blue);
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    }
+
+    .uploadNote {
+      color: var(--red);
+      font-family: var(--poppinsFont);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 24px;
+    }
+  }
+}

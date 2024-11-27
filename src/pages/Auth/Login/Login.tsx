@@ -1,11 +1,10 @@
 import { useState } from "react";
 import styles from "./Login.module.scss";
 import CustomInput from "../../../components/CustomInput/CustomInput";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("warden");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -58,25 +57,6 @@ const Login = () => {
         <h2 className={styles.heading}>Welcome To The Portal</h2>
         <p className={styles.subHeading}>Please login using your details.</p>
 
-        <div className={styles.switchButtons}>
-          <button
-            className={`${styles.switchButton} ${
-              activeTab === "warden" ? styles.active : ""
-            }`}
-            onClick={() => setActiveTab("warden")}
-          >
-            SIGN IN AS WARDEN
-          </button>
-          <button
-            className={`${styles.switchButton} ${
-              activeTab === "admin" ? styles.active : ""
-            }`}
-            onClick={() => setActiveTab("admin")}
-          >
-            SIGN IN AS ADMIN
-          </button>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className={styles.inputContainer}>
             <label>Email</label>
@@ -112,6 +92,11 @@ const Login = () => {
             <button type="submit" className="info">
               Sign in
             </button>
+          </div>
+          <div className={styles.registerWrapper}>
+            <p className={styles.signInText}>
+              Don’t Have An Account? <Link to="/register">Register</Link>
+            </p>
           </div>
         </form>
       </div>

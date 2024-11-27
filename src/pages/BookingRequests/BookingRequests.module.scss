@@ -1,5 +1,5 @@
 @import "../../mixins";
-.allWardensContainer {
+.bookingRequestsContainer {
   padding: 20px;
   background-color: #f0f2f5;
 
@@ -66,7 +66,7 @@
 }
 
 @media screen and (max-width: 767px) {
-  .allWardensContainer {
+  .bookingRequestsContainer {
     padding: 20px;
     background-color: #f0f2f5;
   
