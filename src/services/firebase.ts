@@ -28,6 +28,7 @@ import {
   BookingApplication,
   Hostel,
   IHostel,
+  Reservation,
   SignUpForm,
 } from "../types/types";
 import { generateWardenId } from "../utils/utils";
@@ -498,5 +499,65 @@ export const updateBookingApplicationStatus = async (
           ? error.message
           : "An unexpected error occurred")
     );
+  }
+};
+
+export const fetchHostelReservations = async (): Promise<Reservation[]> => {
+  const auth = getAuth();
+
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("No user is currently signed in.");
+  }
+  const wardenDocRef = doc(db, "wardens", currentUser.uid);
+  const wardenDocSnap = await getDoc(wardenDocRef);
+
+  if (!wardenDocSnap.exists()) {
+    throw new Error("No hostel data found for the current user.");
+  }
+
+  const hostelId = wardenDocSnap.data().hostelId;
+
+  if (!currentUser) {
+    throw new Error("No user is currently signed in.");
+  }
+
+  try {
+    // Query to fetch all reservations for the specified hostel
+    const reservationsRef = collection(db, "reservations");
+    const hostelReservationQuery = query(
+      reservationsRef,
+      where("hostel.id", "==", hostelId)
+    );
+
+    const reservationSnapshot = await getDocs(hostelReservationQuery);
+
+    if (reservationSnapshot.empty) {
+      throw new Error("No reservations found for the specified hostel.");
+    }
+
+    const reservations = reservationSnapshot.docs.map(async (document) => {
+      const reservationData = document.data();
+
+      // For each reservation, fetch the room details
+      const roomRef = doc(
+        db,
+        `hostels/${reservationData.hostel.id}/rooms`,
+        reservationData.reservationDetails.roomId
+      );
+
+      // You can fetch the room data asynchronously if needed
+      const roomDoc = await getDoc(roomRef);
+      if (roomDoc.exists()) {
+        reservationData.roomDetails = roomDoc.data();
+      }
+
+      return reservationData as Reservation;
+    });
+
+    return Promise.all(reservations);
+  } catch (error: any) {
+    console.error("Error fetching reservations:", error);
+    throw new Error(error.message || "Failed to fetch reservations.");
   }
 };
