@@ -9,20 +9,7 @@ import {
 import { Loader } from "../../components/Loader/Loader";
 import { Timestamp } from "firebase/firestore";
 import { formatTimestamp } from "../../utils/utils";
-
-interface DocumentDetailProps {
-  title: string;
-  link: string;
-}
-
-const DocumentDetail: React.FC<DocumentDetailProps> = ({ title, link }) => (
-  <div className="detail">
-    <p>{title}</p>
-    <a href={link} target="_blank" rel="noopener noreferrer">
-      <button className="">Download</button>
-    </a>
-  </div>
-);
+import { DocumentDetail } from "../../components/DocumentDetail/DocumentDetail";
 
 const BookingRequests = () => {
   const [activeKey, setActiveKey] = useState("1");
@@ -333,7 +320,7 @@ const BookingRequests = () => {
             </div>
 
             <div className="card">
-              <h4 className="cardTitle">Warden Documents</h4>
+              <h4 className="cardTitle">Resident Documents</h4>
               {selectedRequest?.documents && (
                 <div>
                   <DocumentDetail
