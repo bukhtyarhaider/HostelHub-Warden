@@ -1,41 +1,95 @@
-import { Modal, Table, Tabs, Button } from "antd";
+import { Modal, Table, Tabs, message } from "antd";
 import styles from "./AllResidents.module.scss";
-import { residentsData } from "../../../../content";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { deleteIcon, viewIcon } from "../../../../assets";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
+import {
+  BookingDetails,
+  Reservation,
+  ReservationHolder,
+} from "../../../../types/types";
+import { fetchHostelReservations } from "../../../../services/firebase";
+import { Timestamp } from "firebase/firestore";
+import { formatTimestamp } from "../../../../utils/utils";
+import { Loader } from "../../../../components/Loader/Loader";
+import { DocumentDetail } from "../../../../components/DocumentDetail/DocumentDetail";
 
 const AllResidents = () => {
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [selectedResident, setSelectedResident] = useState(null); // State to manage selected resident
+  const [selectedResident, setSelectedResident] =
+    useState<Reservation | null>();
+  const [residents, setResidents] = useState<Reservation[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const fetchAllResidents = async () => {
+    setIsLoading(true);
+    try {
+      const fetchedResidents = await fetchHostelReservations();
+      setResidents(fetchedResidents);
+      console.log(fetchedResidents);
+    } catch (error: any) {
+      message.error(`Error fetching resident(s): ${error}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllResidents();
+  }, []);
 
   const toggleDeleteModal = () => {
     setIsDeleteModalVisible(!isDeleteModalVisible);
   };
 
-  const handleViewResident = (resident) => {
-    setSelectedResident(resident); // Set the selected resident
+  const handleViewResident = (resident: Reservation) => {
+    if (resident) setSelectedResident(resident);
   };
 
   const handleBackToTable = () => {
-    setSelectedResident(null); // Clear selected resident to show table again
+    setSelectedResident(null);
   };
 
   const columns = [
-    { title: "Warden ID", dataIndex: "wardenId", key: "wardenId" },
-    { title: "Warden Name", dataIndex: "wardenName", key: "wardenName" },
-    { title: "Hostel Name", dataIndex: "hostelName", key: "hostelName" },
-    { title: "Address", dataIndex: "address", key: "address" },
     {
-      title: "Created Date",
+      title: "ID",
+      key: "userId",
+      render: (record: { reservationHolder: ReservationHolder }) =>
+        record.reservationHolder?.userId.slice(
+          record.reservationHolder?.userId.length - 4,
+          record.reservationHolder?.userId.length
+        ) || "N/A",
+    },
+    {
+      title: "Name",
+      key: "fullname",
+      render: (record: { reservationHolder: ReservationHolder }) =>
+        record.reservationHolder?.fullName || "N/A",
+    },
+    {
+      title: "Email",
+      key: "email",
+      render: (record: { reservationHolder: ReservationHolder }) =>
+        record.reservationHolder?.email || "N/A",
+    },
+
+    {
+      title: "Room Number",
+      key: "roomNumber",
+      render: (record: { reservationDetails: BookingDetails }) =>
+        record.reservationDetails?.roomNumber || "N/A",
+    },
+    {
+      title: "Joining Date",
       dataIndex: "createdAt",
-      key: "createdAt",
+      key: "JoiningDate",
+      render: (createdAt: Timestamp) => formatTimestamp(createdAt),
     },
     {
       title: "Action",
       dataIndex: "",
       key: "x",
-      render: (_, resident) => {
+      render: (resident: Reservation) => {
         return (
           <div className={styles.actions}>
             <img
@@ -53,15 +107,16 @@ const AllResidents = () => {
   return (
     <div className={styles.allResidentsContainer}>
       {selectedResident ? (
-        <div className={styles.residentDetailContainer}>
-          <CustomButton
-            title="Back to Residents List"
-            variant="outline"
-            onClick={handleBackToTable}
-            size={"small"}
-          />
-          <br />
-          <h2 className={styles.title}>Resident Detail</h2>
+        <div>
+          <div className={styles.topSectionContainer}>
+            <h2 className={styles.title}>Resident Detail</h2>
+            <CustomButton
+              title="Back to Residents List"
+              variant="filled"
+              onClick={handleBackToTable}
+              size={"small"}
+            />
+          </div>
 
           <Tabs defaultActiveKey="1">
             <Tabs.TabPane tab="Personal Information" key="1">
@@ -70,61 +125,72 @@ const AllResidents = () => {
                   <h4 className={styles.cardTitle}>Resident Details</h4>
                   <div className={styles.detail}>
                     <h5>Full Name:</h5>
-                    <p>{selectedResident.wardenName}</p>
+                    <p>{selectedResident.reservationHolder.fullName}</p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Email:</h5>
-                    <p>{selectedResident.email}</p>
+                    <p>{selectedResident.reservationHolder.email}</p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Phone Number:</h5>
-                    <p>{selectedResident.phoneNumber}</p>
+                    <p>{selectedResident.reservationHolder.phoneNumber}</p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Current Status:</h5>
-                    <p>{selectedResident.status}</p>
+                    <p>{}</p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Room Number:</h5>
-                    <p>{selectedResident.roomNumber}</p>
+                    <p>{selectedResident.reservationDetails.roomNumber}</p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Room Price:</h5>
-                    <p>{selectedResident.roomPrice}</p>
+                    <p>{`Rs.${selectedResident.reservationDetails.hostelRent}`}</p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Duration:</h5>
-                    <p>{selectedResident.duration}</p>
+                    <p>{selectedResident.reservationDetails.stay.duration}</p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Join Date:</h5>
-                    <p>{selectedResident.joinDate}</p>
+                    <p>{selectedResident.reservationDetails.stay.startDate}</p>
                   </div>
                   <div className={styles.detail}>
                     <h5>End Date:</h5>
-                    <p>{selectedResident.endDate}</p>
+                    <p>{selectedResident.reservationDetails.stay.endDate}</p>
                   </div>
                 </div>
 
                 <div className={styles.card}>
                   <h4 className={styles.cardTitle}>Resident Documents</h4>
-                  {selectedResident.documents.map((doc, index) => (
-                    <div key={index}>
-                      {doc.name && (
-                        <div className={styles.detail}>
-                          <div>
-                            <p>CNIC Front Side</p>
-                            <p>{doc.name}</p>
-                          </div>
-                          <CustomButton
-                            title={"Download"}
-                            variant={"filled"}
-                            size={"medium"}
-                          />
-                        </div>
+                  {selectedResident.reservationHolder?.documents && (
+                    <div>
+                      <DocumentDetail
+                        title="CNIC Front Side"
+                        link={
+                          selectedResident.reservationHolder?.documents
+                            .cnicFront
+                        }
+                      />
+                      <DocumentDetail
+                        title="CNIC Back Side"
+                        link={
+                          selectedResident.reservationHolder?.documents.cnicBack
+                        }
+                      />
+
+                      {selectedResident.reservationHolder?.documents
+                        ?.studentId && (
+                        <DocumentDetail
+                          title="Student-Id Card"
+                          link={
+                            selectedResident.reservationHolder?.documents
+                              .studentId
+                          }
+                        />
                       )}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </Tabs.TabPane>
@@ -135,29 +201,21 @@ const AllResidents = () => {
                   <h4 className={styles.cardTitle}>Current Month Status</h4>
                   <div className={styles.detail}>
                     <h5>Total Amount:</h5>
-                    <p>{selectedResident.totalAmount}</p>
+                    <p></p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Due Date:</h5>
-                    <p>{selectedResident.dueDate}</p>
+                    <p></p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Status:</h5>
-                    <p
-                      className={`${
-                        selectedResident.paymentStatus === "Unpaid"
-                          ? styles.red
-                          : styles.green
-                      }`}
-                    >
-                      {selectedResident.paymentStatus}
-                    </p>
+                    <p className={`${false ? styles.red : styles.green}`}></p>
                   </div>
 
                   <CustomButton
-                    title={"Mark Payment As Done"}
-                    variant={"filled"}
-                    size={"medium"}
+                    title="Mark Payment As Done"
+                    variant="filled"
+                    size="medium"
                   />
                 </div>
               </div>
@@ -180,7 +238,7 @@ const AllResidents = () => {
                     },
                     { title: "Status", dataIndex: "status", key: "status" },
                   ]}
-                  dataSource={selectedResident.paymentHistory}
+                  dataSource={[]}
                   pagination={false}
                 />
               </div>
@@ -192,7 +250,7 @@ const AllResidents = () => {
           <h2 className={styles.title}>Hostel Residents</h2>
           <Table
             columns={columns}
-            dataSource={residentsData}
+            dataSource={residents}
             bordered
             pagination={{ pageSize: 10 }}
           />
@@ -224,6 +282,7 @@ const AllResidents = () => {
           </div>
         </div>
       </Modal>
+      <Loader hide={!isLoading} />
     </div>
   );
 };
