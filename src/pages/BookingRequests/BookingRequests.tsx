@@ -1,25 +1,58 @@
-import { useState, useEffect, SetStateAction } from "react";
-import { Tabs, Table, Modal } from "antd";
+import { useState, useEffect } from "react";
+import { Tabs, Table, Modal, message } from "antd";
 import styles from "./BookingRequests.module.scss";
-import { requestsData } from "../../content";
+import { BookingApplication } from "../../types/types";
+import {
+  fetchHostelBookingApplicationRequests,
+  updateBookingApplicationStatus,
+} from "../../services/firebase";
+import { Loader } from "../../components/Loader/Loader";
+import { Timestamp } from "firebase/firestore";
+import { formatTimestamp } from "../../utils/utils";
+import { DocumentDetail } from "../../components/DocumentDetail/DocumentDetail";
 
 const BookingRequests = () => {
   const [activeKey, setActiveKey] = useState("1");
-  const [filteredData, setFilteredData] = useState(requestsData);
+  const [filteredData, setFilteredData] = useState<BookingApplication[]>();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
-  const [selectedResident, setSelectedResident] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState<BookingApplication>();
+  const [bookingApplicationRequests, setBookingApplicationRequests] = useState<
+    BookingApplication[]
+  >([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const pastRequests = requestsData.filter(
-    (resident) => resident.type === "past"
+  useEffect(() => {
+    const fetchBookingRequestsData = async () => {
+      setIsLoading(true);
+      try {
+        const requests = await fetchHostelBookingApplicationRequests();
+        setBookingApplicationRequests(requests);
+        setFilteredData(
+          requests.filter((request) => request.status === "pending")
+        );
+      } catch (err) {
+        message.error(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBookingRequestsData();
+  }, []);
+
+  const pastRequests = bookingApplicationRequests.filter(
+    (request) => request.status !== "pending"
   );
-  const activeRequests = requestsData.filter(
-    (resident) => resident.type === "active"
+  const activeRequests = bookingApplicationRequests.filter(
+    (request) => request.status === "pending"
   );
 
   // Function to update filtered data based on active tab
-  const updateFilteredData = (key: SetStateAction<string>) => {
+  const updateFilteredData = (key: string) => {
     let data = [];
     switch (key) {
       case "1":
@@ -29,32 +62,25 @@ const BookingRequests = () => {
         data = pastRequests;
         break;
       default:
-        data = requestsData;
+        data = bookingApplicationRequests;
     }
 
     // If there's a search term, filter the data
     if (searchTerm) {
-      data = data.filter(
-        (resident) =>
-          resident.candidateName
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          resident.selectedHostel
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          resident.hostelType.toLowerCase().includes(searchTerm.toLowerCase())
+      data = data.filter((request) =>
+        request.email.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     setFilteredData(data);
   };
 
-  const handleTabChange = (key: SetStateAction<string>) => {
+  const handleTabChange = (key: string) => {
     setActiveKey(key);
     updateFilteredData(key);
   };
 
-  const handleSearch = (event: { target: { value: any } }) => {
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearchTerm(value);
 
@@ -68,8 +94,8 @@ const BookingRequests = () => {
   }, [activeKey]);
 
   // Function to show the details modal
-  const showModal = (resident: SetStateAction<null>) => {
-    setSelectedResident(resident);
+  const showModal = (resident: BookingApplication | undefined) => {
+    setSelectedRequest(resident);
     setIsModalVisible(true);
   };
 
@@ -85,8 +111,60 @@ const BookingRequests = () => {
   };
 
   // Function to confirm the rejection
-  const handleConfirmReject = () => {
-    setIsConfirmModalVisible(false);
+  const handleConfirmReject = async () => {
+    if (selectedRequest) {
+      setIsConfirmModalVisible(false);
+      setIsLoading(true);
+      try {
+        await updateBookingApplicationStatus(selectedRequest.id, "rejected");
+        const updatedBookingApplication = bookingApplicationRequests.map(
+          (request) =>
+            request.id === selectedRequest.id
+              ? ({ ...request, status: "rejected" } as BookingApplication)
+              : request
+        );
+
+        setBookingApplicationRequests(updatedBookingApplication);
+        updateFilteredData(activeKey); // Ensure filtered data is updated
+        message.success("Request is successfully rejected");
+      } catch (error) {
+        message.error(
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleApprove = async () => {
+    if (selectedRequest) {
+      setIsModalVisible(false);
+      setIsLoading(true);
+      try {
+        await updateBookingApplicationStatus(selectedRequest.id, "approved");
+        const updatedBookingApplication = bookingApplicationRequests.map(
+          (request) =>
+            request.id === selectedRequest.id
+              ? ({ ...request, status: "approved" } as BookingApplication)
+              : request
+        );
+
+        setBookingApplicationRequests(updatedBookingApplication);
+        updateFilteredData(activeKey); // Ensure filtered data is updated
+        message.success("Request is successfully approved");
+      } catch (error) {
+        message.error(
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   // Function to cancel the rejection confirmation
@@ -94,43 +172,43 @@ const BookingRequests = () => {
     setIsConfirmModalVisible(false);
   };
 
-  // Dynamic columns based on active tab
   const columns = [
     {
       title: "Candidate Name",
-      dataIndex: "candidateName",
-      key: "candidateName",
+      dataIndex: "fullName",
+      key: "fullName",
     },
     {
       title: "Request Date",
-      dataIndex: "RequestDate",
+      dataIndex: "createdAt",
       key: "RequestDate",
+      render: (createdAt: Timestamp) => formatTimestamp(createdAt),
     },
     {
-      title: "Requested Type",
-      dataIndex: "RequestedType",
-      key: "RequestedType",
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
     },
     {
-      title: "Requested Room",
-      dataIndex: "RequestedRoom",
-      key: "RequestedRoom",
+      title: "Room Number",
+      key: "roomNumber",
+      render: (record: { booking: { roomNumber: any } }) =>
+        record.booking?.roomNumber || "N/A",
     },
-    { title: "Status", dataIndex: "status", key: "status" },
 
     {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+    },
+    {
       title: "Action",
-      dataIndex: "",
-      key: "x",
-      render: (warden: SetStateAction<null>) => {
-        if (activeKey == "1") {
-          return (
-            <div className={styles.actions}>
-              <button onClick={() => showModal(warden)}>View Details</button>
-            </div>
-          );
-        }
-      },
+      key: "action",
+      render: (_: any, record: BookingApplication) => (
+        <div className={styles.actions}>
+          <button onClick={() => showModal(record)}>View Details</button>
+        </div>
+      ),
     },
   ];
 
@@ -196,15 +274,15 @@ const BookingRequests = () => {
               <h4 className="cardTitle">Candidate Details</h4>
               <div className="detail">
                 <h5>Full Name:</h5>
-                <p>{selectedResident?.candidateName}</p>
+                <p>{selectedRequest?.fullName}</p>
               </div>
               <div className="detail">
                 <h5>Email:</h5>
-                <p>{selectedResident?.email}</p>
+                <p>{selectedRequest?.email}</p>
               </div>
               <div className="detail">
                 <h5>Phone Number:</h5>
-                <p>{selectedResident?.phoneNumber}</p>
+                <p>{selectedRequest?.phoneNumber ?? "N/A"}</p>
               </div>
             </div>
 
@@ -212,24 +290,68 @@ const BookingRequests = () => {
               <h4 className="cardTitle">Reservation Details</h4>
               <div className="detail">
                 <h5>Selected Hostel:</h5>
-                <p>{selectedResident?.selectedHostel}</p>
-              </div>
-              <div className="detail">
-                <h5>Selected Room:</h5>
-                <p>{selectedResident?.selectedRoom}</p>
+                <p>{selectedRequest?.hostel.name}</p>
               </div>
               <div className="detail">
                 <h5>Hostel Type:</h5>
-                <p>{selectedResident?.hostelType}</p>
+                <p>{selectedRequest?.hostel.type}</p>
+              </div>
+              <div className="detail">
+                <h5>Selected Room:</h5>
+                <p>{selectedRequest?.booking.roomNumber}</p>
+              </div>
+              <div className="detail">
+                <h5>Room Rent:</h5>
+                <p>{`Rs. ${selectedRequest?.booking.hostelRent}`}</p>
+              </div>
+
+              <div className="detail">
+                <h5>Stay Duration:</h5>
+                <p>{selectedRequest?.booking.stay.duration}</p>
+              </div>
+              <div className="detail">
+                <h5>Start Date:</h5>
+                <p>{selectedRequest?.booking.stay.startDate}</p>
+              </div>
+              <div className="detail">
+                <h5>End Date:</h5>
+                <p>{selectedRequest?.booking.stay.endDate}</p>
               </div>
             </div>
+
+            <div className="card">
+              <h4 className="cardTitle">Resident Documents</h4>
+              {selectedRequest?.documents && (
+                <div>
+                  <DocumentDetail
+                    title="CNIC Front Side"
+                    link={selectedRequest.documents.cnicFront}
+                  />
+                  <DocumentDetail
+                    title="CNIC Back Side"
+                    link={selectedRequest.documents.cnicBack}
+                  />
+
+                  {selectedRequest?.documents?.studentId && (
+                    <DocumentDetail
+                      title="Student-Id Card"
+                      link={selectedRequest.documents.studentId}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="buttonsGroup">
-            <button onClick={handleReject} className="danger">
-              Reject
-            </button>
-            <button className="success">Approve</button>
-          </div>
+          {selectedRequest?.status === "pending" ? (
+            <div className="buttonsGroup">
+              <button onClick={handleReject} className="danger">
+                Reject
+              </button>
+              <button onClick={handleApprove} className="success">
+                Approve
+              </button>
+            </div>
+          ) : null}
         </div>
       </Modal>
 
@@ -256,6 +378,7 @@ const BookingRequests = () => {
           </div>
         </div>
       </Modal>
+      <Loader hide={!isLoading} />
     </div>
   );
 };

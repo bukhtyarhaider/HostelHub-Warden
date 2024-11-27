@@ -1,19 +1,26 @@
 import React, { useState } from "react";
-import { Select } from "antd";
+import { message, Select } from "antd";
 import styles from "./ProfileInfo.module.scss";
 import { avatar, cameraIcon } from "../../../assets";
 import CustomInput from "../../../components/CustomInput/CustomInput";
+import {
+  updateUserProfile,
+  uploadProfileImage,
+} from "../../../services/firebase";
+import { Loader } from "../../../components/Loader/Loader";
 
 const { Option } = Select;
 
-const ProfileInfo = ({ userData, setUserData }) => {
+const ProfileInfo: React.FC<any> = ({ userData, setUserData }) => {
   const [errors, setErrors] = useState<any>({});
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
     // Remove error for the specific field
-    setErrors((prevErrors) => ({
+    setErrors((prevErrors: any) => ({
       ...prevErrors,
       [name]: "",
     }));
@@ -23,7 +30,7 @@ const ProfileInfo = ({ userData, setUserData }) => {
 
   const handleSelectChange = (name: string, value: string) => {
     // Remove error for the specific field
-    setErrors((prevErrors) => ({
+    setErrors((prevErrors: any) => ({
       ...prevErrors,
       [name]: "",
     }));
@@ -34,8 +41,8 @@ const ProfileInfo = ({ userData, setUserData }) => {
   const validate = () => {
     const newErrors: any = {};
 
-    if (!userData.fullName) {
-      newErrors.fullName = "Full Name is required";
+    if (!userData.displayName) {
+      newErrors.displayName = "Full Name is required";
     }
 
     if (!userData.email) {
@@ -61,25 +68,85 @@ const ProfileInfo = ({ userData, setUserData }) => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const onImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setProfileImage(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
     } else {
-      // Handle successful form submission here
-      console.log("Form submitted successfully", userData);
+      setSubmitting(true);
+      try {
+        let profileImageUrl = "";
+
+        if (profileImage) {
+          profileImageUrl = await uploadProfileImage(
+            profileImage,
+            userData.email
+          );
+        } else {
+          profileImageUrl = userData.photoURL;
+        }
+
+        await updateUserProfile(
+          userData.fullName,
+          userData.phoneNumber,
+          userData.currentAddress,
+          userData.currentState,
+          profileImageUrl
+        );
+        message.success("Profile Updatted!");
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          message.error(`Failed to update profile: ${error.message}`);
+        } else {
+          message.error("Failed to update profile due to an unknown error.");
+        }
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
   return (
     <div className={styles.profileContainer}>
       <h2 className={styles.heading}>User Profile</h2>
-
       <div className={styles.profilePictureContainer}>
-        <img src={avatar} alt="Profile" className={styles.profilePicture} />
+        {!!profileImage || userData.photoURL ? (
+          <img
+            src={
+              profileImage
+                ? URL.createObjectURL(profileImage)
+                : userData.photoURL
+            }
+            alt="Profile"
+            className={styles.profilePicture}
+          />
+        ) : (
+          <div className={styles.avatarPlaceholder}>
+            {!!userData?.fullName ? userData?.fullName?.charAt(0) : "Warden"}
+          </div>
+        )}
         <div className={styles.cameraIcon}>
-          <img src={cameraIcon} alt="Camera Icon" />
+          <label htmlFor="profileImage">
+            <img
+              src={cameraIcon}
+              alt="Camera Icon"
+              style={{ cursor: "pointer" }}
+            />
+          </label>
+          <input
+            id="profileImage"
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={onImageChange}
+          />
         </div>
       </div>
 
@@ -91,12 +158,14 @@ const ProfileInfo = ({ userData, setUserData }) => {
           <div className={styles.input}>
             <CustomInput
               type="text"
-              name="fullName"
+              name="displayName"
               placeholder="Full Name"
-              value={userData.fullName}
+              value={userData.displayName}
               onChange={handleChange}
             />
-            {errors.fullName && <div className="error">{errors.fullName}</div>}
+            {errors.fullName && (
+              <div className="error">{errors.displayName}</div>
+            )}
           </div>
         </div>
 
@@ -106,6 +175,7 @@ const ProfileInfo = ({ userData, setUserData }) => {
             <CustomInput
               type="email"
               name="email"
+              disabled={true}
               placeholder="Email"
               value={userData.email}
               onChange={handleChange}
@@ -166,14 +236,18 @@ const ProfileInfo = ({ userData, setUserData }) => {
         </div>
 
         <div className={styles.buttonContainer}>
-          <button type="button" className={styles.backButton}>
-            Back
-          </button>
-          <button type="submit" className={styles.saveButton}>
+          <button
+            type="submit"
+            disabled={submitting}
+            className={
+              submitting ? styles.disabledSaveButton : styles.saveButton
+            }
+          >
             Save Changes
           </button>
         </div>
       </form>
+      {<Loader hide={!submitting} />}
     </div>
   );
 };

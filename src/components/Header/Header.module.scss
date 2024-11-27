@@ -4,7 +4,13 @@
   @include flex(row, space-between, center);
   background-color: white;
   padding-inline: 40px;
-  height: 100px;
+  height: 100px; 
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  z-index: 1; 
+  width: 100%; 
 
   .profile {
     @include flex(row, center, center);
@@ -12,6 +18,19 @@
     img {
       width: 32px;
       height: 32px;
+    }
+
+    .avatarPlaceholder{
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #ededee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #979797;
     }
 
     h6 {
