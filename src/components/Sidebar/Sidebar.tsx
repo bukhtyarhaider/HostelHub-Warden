@@ -41,16 +41,16 @@ const Sidebar = () => {
               className={({ isActive }) => (isActive ? styles.active : "")}
             >
               <ReactSVG src={home} />
-              <span>My Hostels</span>
+              <span>Dashboard</span>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to="/booking-requests"
+              to="/wardens"
               className={({ isActive }) => (isActive ? styles.active : "")}
             >
               <ReactSVG src={wardensIcon} />
-              <span>Booking Requests</span>
+              <span>All Wardens</span>
             </NavLink>
           </li>
           <li>

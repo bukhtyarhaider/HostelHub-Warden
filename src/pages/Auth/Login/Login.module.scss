@@ -61,22 +61,11 @@
 }
 
 .buttonWrapper {
-  padding-top: 20px;
+  padding-top: 10px;
   @include flex(row, center, center);
 
   button {
     width: 170px !important;
-  }
-}
-
-.registerWrapper {
-  padding-top: 20px;
-  @include flex(row, center, center);
-  p {
-    font-family: Inter;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
   }
 }
 
