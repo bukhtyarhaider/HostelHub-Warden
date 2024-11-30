@@ -19,3 +19,23 @@ export const formatTimestamp = (timestamp: Timestamp): string => {
 
   return `${year}-${month}-${day}`;
 };
+
+export const getMonthName = (dateString: string): string => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    throw new Error("Invalid date format");
+  }
+  return date.toLocaleString("default", { month: "long" });
+};
+
+export const addMonths = (date: Date, months: number): Date => {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+
+  // Handle edge case for dates at the end of the month
+  if (result.getDate() !== date.getDate()) {
+    result.setDate(0); // Roll back to the last valid date of the previous month
+  }
+
+  return result;
+};
