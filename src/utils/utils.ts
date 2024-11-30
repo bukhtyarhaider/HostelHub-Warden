@@ -39,3 +39,20 @@ export const addMonths = (date: Date, months: number): Date => {
 
   return result;
 };
+
+export const abbreviateNumber = (input: number | string): string => {
+  const num = typeof input === "string" ? parseFloat(input) : input;
+
+  if (isNaN(num)) {
+    throw new Error(
+      "Invalid input: Please provide a valid number or numeric string."
+    );
+  }
+
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1)}M`;
+  } else if (num >= 1_000) {
+    return `${(num / 1_000).toFixed(1)}K`;
+  }
+  return num.toString();
+};
