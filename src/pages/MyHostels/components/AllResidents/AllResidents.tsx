@@ -5,12 +5,16 @@ import { deleteIcon, viewIcon } from "../../../../assets";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
 import {
   BookingDetails,
+  Payment,
   Reservation,
   ReservationHolder,
 } from "../../../../types/types";
-import { fetchHostelReservations } from "../../../../services/firebase";
+import {
+  fetchHostelReservations,
+  updatePaymentAndCreateNew,
+} from "../../../../services/firebase";
 import { Timestamp } from "firebase/firestore";
-import { formatTimestamp } from "../../../../utils/utils";
+import { formatTimestamp, getMonthName } from "../../../../utils/utils";
 import { Loader } from "../../../../components/Loader/Loader";
 import { DocumentDetail } from "../../../../components/DocumentDetail/DocumentDetail";
 
@@ -26,7 +30,6 @@ const AllResidents = () => {
     try {
       const fetchedResidents = await fetchHostelReservations();
       setResidents(fetchedResidents);
-      console.log(fetchedResidents);
     } catch (error: any) {
       message.error(`Error fetching resident(s): ${error}`);
     } finally {
@@ -43,11 +46,38 @@ const AllResidents = () => {
   };
 
   const handleViewResident = (resident: Reservation) => {
-    if (resident) setSelectedResident(resident);
+    if (resident) {
+      const currentDate = new Date().toISOString().split("T")[0];
+      const validPayments = resident.payments.filter(
+        (payment) => payment.dueDate <= currentDate
+      );
+
+      resident.payments = validPayments;
+      setSelectedResident(resident);
+    }
   };
 
   const handleBackToTable = () => {
     setSelectedResident(null);
+  };
+
+  const onMarkPaymentAsDone = async () => {
+    setIsLoading(true);
+    try {
+      if (selectedResident && selectedResident.payments) {
+        await updatePaymentAndCreateNew(
+          selectedResident.id,
+          selectedResident?.payments[0]
+        );
+        console.log(selectedResident.id, selectedResident?.payments[0]);
+
+        message.success("Payment is successfully received");
+      }
+    } catch (error: any) {
+      message.error(`Error registoring payments: ${error}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const columns = [
@@ -101,6 +131,40 @@ const AllResidents = () => {
           </div>
         );
       },
+    },
+  ];
+
+  const paymentTableColumns = [
+    {
+      title: "Month",
+      key: "month",
+      render: (payment: Payment) => getMonthName(payment.dueDate),
+    },
+    {
+      title: "Payment Amount",
+      key: "paymentAmount",
+      render: (payment: Payment) => `Rs.${payment.amount}` || "N/A",
+    },
+    { title: "Due Date", dataIndex: "dueDate", key: "dueDate" },
+    {
+      title: "Received Date",
+      key: "receivedDate",
+      render: (payment: Payment) =>
+        (payment.receivedDate && formatTimestamp(payment.receivedDate)) ||
+        "N/A",
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (payment: Payment) => (
+        <p
+          className={
+            payment.status === "pending" ? styles.pendingClip : styles.paidClip
+          }
+        >
+          {payment.status}
+        </p>
+      ),
     },
   ];
 
@@ -201,18 +265,39 @@ const AllResidents = () => {
                   <h4 className={styles.cardTitle}>Current Month Status</h4>
                   <div className={styles.detail}>
                     <h5>Total Amount:</h5>
-                    <p></p>
+                    <p>
+                      {(selectedResident.payments &&
+                        `Rs.${selectedResident?.payments[0].amount}`) ??
+                        "0"}
+                    </p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Due Date:</h5>
-                    <p></p>
+                    <p>
+                      {(selectedResident.payments &&
+                        selectedResident?.payments[0].dueDate) ??
+                        "N/A"}
+                    </p>
                   </div>
                   <div className={styles.detail}>
                     <h5>Status:</h5>
-                    <p className={`${false ? styles.red : styles.green}`}></p>
+                    <p
+                      className={`${
+                        selectedResident.payments &&
+                        selectedResident?.payments[0].status === "pending"
+                          ? styles.pendingClip
+                          : styles.paidClip
+                      }`}
+                    >
+                      {(selectedResident.payments &&
+                        selectedResident?.payments[0].status) ??
+                        "N/A"}
+                    </p>
                   </div>
 
                   <CustomButton
+                    onClick={onMarkPaymentAsDone}
+                    disabled={selectedResident.payments[0].status === "paid"}
                     title="Mark Payment As Done"
                     variant="filled"
                     size="medium"
@@ -223,22 +308,8 @@ const AllResidents = () => {
               <div className={styles.paymentDetails}>
                 <h3>Payment History</h3>
                 <Table
-                  columns={[
-                    { title: "Month", dataIndex: "month", key: "month" },
-                    {
-                      title: "Payment Amount",
-                      dataIndex: "paymentAmount",
-                      key: "paymentAmount",
-                    },
-                    { title: "Due Date", dataIndex: "dueDate", key: "dueDate" },
-                    {
-                      title: "Received Date",
-                      dataIndex: "receivedDate",
-                      key: "receivedDate",
-                    },
-                    { title: "Status", dataIndex: "status", key: "status" },
-                  ]}
-                  dataSource={[]}
+                  columns={paymentTableColumns}
+                  dataSource={selectedResident.payments}
                   pagination={false}
                 />
               </div>

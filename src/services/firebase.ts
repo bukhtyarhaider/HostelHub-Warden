@@ -1,4 +1,3 @@
-// firebase.ts
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -22,16 +21,18 @@ import {
   query,
   where,
   updateDoc,
+  orderBy,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import {
   BookingApplication,
   Hostel,
   IHostel,
+  Payment,
   Reservation,
   SignUpForm,
 } from "../types/types";
-import { generateWardenId } from "../utils/utils";
+import { addMonths, generateWardenId } from "../utils/utils";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -538,6 +539,7 @@ export const fetchHostelReservations = async (): Promise<Reservation[]> => {
 
     const reservations = reservationSnapshot.docs.map(async (document) => {
       const reservationData = document.data();
+      const reservationID = document.id;
 
       // For each reservation, fetch the room details
       const roomRef = doc(
@@ -552,6 +554,25 @@ export const fetchHostelReservations = async (): Promise<Reservation[]> => {
         reservationData.roomDetails = roomDoc.data();
       }
 
+      // Fetch payment details
+      if (reservationID) {
+        const paymentsRef = collection(
+          db,
+          `reservations/${reservationID}/payments`
+        );
+
+        // Create a query to order payments by createdAt in descending order
+        const paymentsQuery = query(paymentsRef, orderBy("createdAt", "desc"));
+
+        // Fetch the ordered payments
+        const paymentSnapshot = await getDocs(paymentsQuery);
+
+        if (!paymentSnapshot.empty) {
+          reservationData.payments = paymentSnapshot.docs.map((doc) =>
+            doc.data()
+          );
+        }
+      }
       return reservationData as Reservation;
     });
 
@@ -559,5 +580,62 @@ export const fetchHostelReservations = async (): Promise<Reservation[]> => {
   } catch (error: any) {
     console.error("Error fetching reservations:", error);
     throw new Error(error.message || "Failed to fetch reservations.");
+  }
+};
+
+export const updatePaymentAndCreateNew = async (
+  reservationId: string,
+  payment: Payment
+) => {
+  try {
+    const paymentRef = doc(
+      db,
+      `reservations/${reservationId}/payments/${payment.id}`
+    );
+
+    // Fetch the current payment document
+    const paymentSnapshot = await getDoc(paymentRef);
+    if (!paymentSnapshot.exists()) {
+      throw new Error("Payment document not found.");
+    }
+
+    const currentPaymentData = paymentSnapshot.data();
+    const lastDueDate = currentPaymentData.dueDate;
+
+    // Update the current payment document
+    await updateDoc(paymentRef, {
+      method: "cash",
+      receivedDate: Timestamp.now(),
+      status: "paid",
+    });
+
+    // Calculate the next due date (add one month to the last due date)
+    const nextDueDate = addMonths(new Date(lastDueDate), 1)
+      .toISOString()
+      .split("T")[0]; // Get only the date in YYYY-MM-DD format
+
+    // Reference to the new payment document
+    const paymentsRef = collection(
+      db,
+      `reservations/${reservationId}/payments`
+    );
+    const newPaymentId = doc(paymentsRef).id;
+
+    // New payment data
+    const newPaymentData = {
+      status: "pending",
+      dueDate: nextDueDate,
+      method: "",
+      amount: payment.amount,
+      createdAt: Timestamp.now(),
+      paymentId: newPaymentId,
+    };
+
+    // Save the new payment document
+    await setDoc(doc(paymentsRef, newPaymentId), newPaymentData);
+
+    console.log("Paid successfully.");
+  } catch (error) {
+    console.error("Error updating payment and creating new one:", error);
   }
 };
