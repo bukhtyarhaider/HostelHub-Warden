@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type BookingApplicationStatus = "pending" | "approved" | "rejected";
 export interface FormData {
   fullName: string;
@@ -125,10 +127,22 @@ interface WardenDetails {
   photoURL?: string;
 }
 
+export interface Payment {
+  id: string;
+  amount: string;
+  dueDate: string;
+  method: string;
+  status: string;
+  receivedDate?: Timestamp;
+  createdAt: string;
+}
+
 export interface Reservation {
   reservationHolder: ReservationHolder;
   reservationDetails: BookingDetails;
   hostel: ReservedHostel;
   wardenDetails: WardenDetails;
   createdAt: Timestamp;
+  payments?: Payment[];
+  id: string;
 }
