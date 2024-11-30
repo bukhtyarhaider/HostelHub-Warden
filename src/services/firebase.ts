@@ -639,3 +639,80 @@ export const updatePaymentAndCreateNew = async (
     console.error("Error updating payment and creating new one:", error);
   }
 };
+
+export const getWardenStatistics = async () => {
+  const currentUser = getAuth().currentUser;
+  if (!currentUser) {
+    throw new Error("No user is currently signed in.");
+  }
+
+  // Fetch warden's hostelId
+  const wardenDocRef = doc(db, "wardens", currentUser.uid);
+  const wardenDocSnap = await getDoc(wardenDocRef);
+
+  if (!wardenDocSnap.exists()) {
+    throw new Error("No warden data found for the current user.");
+  }
+
+  const hostelId = wardenDocSnap.data().hostelId;
+
+  // Fetch total rooms
+  const roomsRef = collection(db, `hostels/${hostelId}/rooms`);
+  const roomsSnapshot = await getDocs(roomsRef);
+  const totalRooms = roomsSnapshot.size;
+
+  // Fetch total residents (reservations)
+  const reservationsRef = collection(db, "reservations");
+  const reservationsQuery = query(
+    reservationsRef,
+    where("hostel.id", "==", hostelId)
+  );
+  const reservationsSnapshot = await getDocs(reservationsQuery);
+  const totalResidents = reservationsSnapshot.size;
+
+  // Fetch new requests (pending booking applications)
+  const bookingApplicationsRef = collection(db, "bookingApplications");
+  const bookingApplicationsQuery = query(
+    bookingApplicationsRef,
+    where("hostel.id", "==", hostelId),
+    where("status", "==", "pending")
+  );
+  const bookingApplicationsSnapshot = await getDocs(bookingApplicationsQuery);
+  const newRequests = bookingApplicationsSnapshot.size;
+
+  // Calculate total revenue
+  let totalRevenue = 0;
+
+  for (const reservationDoc of reservationsSnapshot.docs) {
+    const reservationData = reservationDoc.data();
+    let payments: Payment[] = [];
+
+    if (reservationData.id) {
+      const paymentsRef = collection(
+        db,
+        `reservations/${reservationData.id}/payments`
+      );
+
+      const paymentSnapshot = await getDocs(paymentsRef);
+
+      if (!paymentSnapshot.empty) {
+        payments = paymentSnapshot.docs.map((doc) => {
+          return doc.data() as Payment;
+        });
+      }
+
+      payments.forEach((payment) => {
+        if (payment.status === "paid") {
+          totalRevenue += parseFloat(payment.amount);
+        }
+      });
+    }
+  }
+
+  return {
+    totalRooms,
+    totalResidents,
+    newRequests,
+    totalRevenue,
+  };
+};

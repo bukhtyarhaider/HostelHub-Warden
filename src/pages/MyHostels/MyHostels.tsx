@@ -1,14 +1,44 @@
 import { ReactSVG } from "react-svg";
 import styles from "./MyHostels.module.scss";
-import { statisticsData } from "../../content";
 import { Tabs } from "antd";
-import { SetStateAction, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import AllDetails from "./components/AllDetails/AllDetails";
 import HostelNotices from "./components/HostelNotices/HostelNotices";
 import AllResidents from "./components/AllResidents/AllResidents";
+import { getWardenStatistics } from "../../services/firebase";
+import {
+  totalHostelsIcon,
+  totalRequestsIcon,
+  totalResidentsIcon,
+  totalRevenueIcon,
+} from "../../assets";
+import { abbreviateNumber } from "../../utils/utils";
 
 const MyHostels = () => {
   const [activeKey, setActiveKey] = useState("1");
+  const [stats, setStats] = useState<any>([
+    {
+      label: "Total Rooms",
+      value: "0",
+      icon: totalHostelsIcon,
+    },
+    {
+      label: "Total Residents",
+      value: "0",
+      icon: totalResidentsIcon,
+    },
+    {
+      label: "New Requests",
+      value: "0",
+      icon: totalRequestsIcon,
+    },
+    {
+      label: "Total Revenue",
+      value: "0",
+      icon: totalRevenueIcon,
+    },
+  ]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const handleTabChange = (key: SetStateAction<string>) => {
     setActiveKey(key);
   };
@@ -30,10 +60,50 @@ const MyHostels = () => {
     },
   ];
 
+  const fetchAllStats = async () => {
+    setIsLoading(true);
+    try {
+      const fetchStats = await getWardenStatistics();
+
+      const statisticsData = [
+        {
+          label: "Total Rooms",
+          value: abbreviateNumber(fetchStats.totalRooms),
+          icon: totalHostelsIcon,
+        },
+        {
+          label: "Total Residents",
+          value: abbreviateNumber(fetchStats.totalResidents),
+          icon: totalResidentsIcon,
+        },
+        {
+          label: "New Requests",
+          value: abbreviateNumber(fetchStats.newRequests),
+          icon: totalRequestsIcon,
+        },
+        {
+          label: "Total Revenue",
+          value: abbreviateNumber(fetchStats.totalRevenue),
+          icon: totalRevenueIcon,
+        },
+      ];
+
+      setStats(statisticsData);
+    } catch (error: any) {
+      console.error("Error fetching notices:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllStats();
+  }, []);
+
   return (
     <div className={styles.myHostelsContainer}>
       <div className={styles.statsSection}>
-        {statisticsData.map((data) => (
+        {stats.map((data: any) => (
           <div className={styles.statBox}>
             <div className={styles.left}>
               <ReactSVG src={data.icon} />
