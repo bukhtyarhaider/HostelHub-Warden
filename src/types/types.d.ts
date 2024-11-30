@@ -143,6 +143,6 @@ export interface Reservation {
   hostel: ReservedHostel;
   wardenDetails: WardenDetails;
   createdAt: Timestamp;
-  payments?: Payment[];
+  payments: Payment[];
   id: string;
 }

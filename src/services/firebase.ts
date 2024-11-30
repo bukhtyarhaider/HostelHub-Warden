@@ -21,6 +21,7 @@ import {
   query,
   where,
   updateDoc,
+  orderBy,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import {
@@ -560,7 +561,12 @@ export const fetchHostelReservations = async (): Promise<Reservation[]> => {
           `reservations/${reservationID}/payments`
         );
 
-        const paymentSnapshot = await getDocs(paymentsRef);
+        // Create a query to order payments by createdAt in descending order
+        const paymentsQuery = query(paymentsRef, orderBy("createdAt", "desc"));
+
+        // Fetch the ordered payments
+        const paymentSnapshot = await getDocs(paymentsQuery);
+
         if (!paymentSnapshot.empty) {
           reservationData.payments = paymentSnapshot.docs.map((doc) =>
             doc.data()

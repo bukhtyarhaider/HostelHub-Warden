@@ -46,7 +46,15 @@ const AllResidents = () => {
   };
 
   const handleViewResident = (resident: Reservation) => {
-    if (resident) setSelectedResident(resident);
+    if (resident) {
+      const currentDate = new Date().toISOString().split("T")[0];
+      const validPayments = resident.payments.filter(
+        (payment) => payment.dueDate <= currentDate
+      );
+
+      resident.payments = validPayments;
+      setSelectedResident(resident);
+    }
   };
 
   const handleBackToTable = () => {
@@ -289,6 +297,7 @@ const AllResidents = () => {
 
                   <CustomButton
                     onClick={onMarkPaymentAsDone}
+                    disabled={selectedResident.payments[0].status === "paid"}
                     title="Mark Payment As Done"
                     variant="filled"
                     size="medium"
