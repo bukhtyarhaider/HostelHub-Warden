@@ -1,0 +1,6 @@
+@import "../../mixins";
+
+.documnetContainer{
+    @include flex(row, space-between, center);
+    margin: 5px;
+}

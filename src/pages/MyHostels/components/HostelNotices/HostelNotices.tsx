@@ -1,21 +1,56 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "antd";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { noticesData } from "../../../../content";
+
 import styles from "./HostelNotices.module.scss";
+import CustomInput from "../../../../components/CustomInput/CustomInput";
+import { fetchNotices, saveNotice } from "../../../../services/firebase";
+import { Loader } from "../../../../components/Loader/Loader";
+import NotFound from "../../../../components/NotFound/NotFound";
 
 const HostelNotices = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editorContent, setEditorContent] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [editorContent, setEditorContent] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
+  const [notices, setNotices] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
 
-  const handleEditorChange = (value) => {
+  const handleEditorChange = (value: string) => {
     setEditorContent(value);
   };
+
+  const submitNotice = async () => {
+    try {
+      await saveNotice(title, editorContent);
+      setTitle("");
+      setEditorContent("");
+      toggleModal();
+      fetchAllNotices();
+    } catch (error: any) {
+      console.error("Error submitting notice:", error);
+    }
+  };
+
+  const fetchAllNotices = async () => {
+    setIsLoading(true);
+    try {
+      const fetchedNotices = await fetchNotices();
+      setNotices(fetchedNotices);
+    } catch (error: any) {
+      console.error("Error fetching notices:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllNotices();
+  }, []);
 
   return (
     <div className={styles.hostelNoticesContainer}>
@@ -24,25 +59,52 @@ const HostelNotices = () => {
         <button onClick={toggleModal}>Add New Notice</button>
       </div>
 
-      <div className={styles.cardsContainer}>
-        {noticesData.map((data, index) => (
-          <div key={index} className={styles.card}>
-            <h2 className={styles.cardTitle}>{data.title}</h2>
-            <p className={styles.description}>{data.description}</p>
-            <p className={styles.date}>{data.date}</p>
-          </div>
-        ))}
-      </div>
+      {notices.length ? (
+        <div className={styles.cardsContainer}>
+          {notices.map((data) => (
+            <div key={data.id} className={styles.card}>
+              <h2 className={styles.cardTitle}>{data.title}</h2>
+              <br />
+              <div dangerouslySetInnerHTML={{ __html: data.body }} />
+              <br />
+              <p className={styles.date}>
+                {new Date(data.date).toLocaleDateString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ padding: "20px" }}>
+          <NotFound
+            title="No Notice Found"
+            message="You have not submitted any hostel notices yet."
+          />
+        </div>
+      )}
 
       <Modal
         title="Add New Notice"
         open={isModalOpen}
-        onOk={toggleModal}
+        onOk={submitNotice}
         onCancel={toggleModal}
         okText="Add"
       >
-        <ReactQuill value={editorContent} onChange={handleEditorChange} />
+        <CustomInput
+          type="text"
+          placeholder="Enter Notice title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <br />
+
+        <ReactQuill
+          value={editorContent}
+          onChange={handleEditorChange}
+          style={{ height: "250px" }}
+        />
+        <br />
       </Modal>
+      <Loader hide={!isLoading} />
     </div>
   );
 };
