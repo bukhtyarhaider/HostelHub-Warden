@@ -65,17 +65,28 @@ const AllResidents = () => {
   const onMarkPaymentAsDone = async () => {
     setIsLoading(true);
     try {
-      if (selectedResident && selectedResident.payments) {
-        await updatePaymentAndCreateNew(
-          selectedResident.id,
-          selectedResident?.payments[0]
-        );
-        console.log(selectedResident.id, selectedResident?.payments[0]);
+      if (selectedResident && selectedResident.payments.length > 0) {
+        const updatedPayment: Payment = {
+          ...selectedResident.payments[0],
+          status: "paid",
+          receivedDate: Timestamp.now(),
+        };
+
+        await updatePaymentAndCreateNew(selectedResident.id, updatedPayment);
+
+        setSelectedResident((prevState) => {
+          if (!prevState) return null;
+
+          return {
+            ...prevState,
+            payments: [updatedPayment, ...prevState.payments.slice(1)],
+          };
+        });
 
         message.success("Payment is successfully received");
       }
     } catch (error: any) {
-      message.error(`Error registoring payments: ${error}`);
+      message.error(`Error registering payments: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
