@@ -45,15 +45,16 @@ const AllResidents = () => {
     setIsDeleteModalVisible(!isDeleteModalVisible);
   };
 
-  const handleViewResident = (resident: Reservation) => {
-    if (resident) {
+  const handleViewResident = (resident: Reservation, payments: Payment[]) => {
+    resident.payments = payments;
+    if (payments) {
       const currentDate = new Date().toISOString().split("T")[0];
       const validPayments = resident.payments.filter(
         (payment) => payment.dueDate <= currentDate
       );
 
-      resident.payments = validPayments;
-      setSelectedResident(resident);
+      const updatedResident = { ...resident, payments: validPayments };
+      setSelectedResident(updatedResident);
     }
   };
 
@@ -123,7 +124,7 @@ const AllResidents = () => {
         return (
           <div className={styles.actions}>
             <img
-              onClick={() => handleViewResident(resident)}
+              onClick={() => handleViewResident(resident, resident.payments)}
               src={viewIcon}
               alt="view"
             />
