@@ -135,7 +135,7 @@ const AllResidents = () => {
         return (
           <div className={styles.actions}>
             <img
-              onClick={() => handleViewResident(resident, resident.payments)}
+              onClick={() => handleViewResident(resident, resident?.payments)}
               src={viewIcon}
               alt="view"
             />
@@ -171,10 +171,10 @@ const AllResidents = () => {
       render: (payment: Payment) => (
         <p
           className={
-            payment.status === "pending" ? styles.pendingClip : styles.paidClip
+            payment?.status === "pending" ? styles.pendingClip : styles.paidClip
           }
         >
-          {payment.status}
+          {payment?.status ?? "N/A"}
         </p>
       ),
     },
@@ -279,7 +279,7 @@ const AllResidents = () => {
                     <h5>Total Amount:</h5>
                     <p>
                       {(selectedResident.payments &&
-                        `Rs.${selectedResident?.payments[0].amount}`) ??
+                        `Rs.${selectedResident?.payments[0]?.amount}`) ??
                         "0"}
                     </p>
                   </div>
@@ -287,7 +287,7 @@ const AllResidents = () => {
                     <h5>Due Date:</h5>
                     <p>
                       {(selectedResident.payments &&
-                        selectedResident?.payments[0].dueDate) ??
+                        selectedResident?.payments[0]?.dueDate) ??
                         "N/A"}
                     </p>
                   </div>
@@ -296,20 +296,20 @@ const AllResidents = () => {
                     <p
                       className={`${
                         selectedResident.payments &&
-                        selectedResident?.payments[0].status === "pending"
+                        selectedResident?.payments[0]?.status === "pending"
                           ? styles.pendingClip
                           : styles.paidClip
                       }`}
                     >
                       {(selectedResident.payments &&
-                        selectedResident?.payments[0].status) ??
+                        selectedResident?.payments[0]?.status) ??
                         "N/A"}
                     </p>
                   </div>
 
                   <CustomButton
                     onClick={onMarkPaymentAsDone}
-                    disabled={selectedResident.payments[0].status === "paid"}
+                    disabled={selectedResident.payments[0]?.status === "paid"}
                     title="Mark Payment As Done"
                     variant="filled"
                     size="medium"
